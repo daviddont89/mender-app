@@ -1,0 +1,142 @@
+// Screen 7: Post a Job
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+
+const PostJobScreen = () => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [address, setAddress] = useState('');
+  const [instructions, setInstructions] = useState('');
+  const [images, setImages] = useState([]);
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setImages([...images, result.assets[0].uri]);
+    }
+  };
+
+  const handlePostJob = () => {
+    if (!title || !description || !address) {
+      Alert.alert('Missing Info', 'Please fill in all required fields.');
+      return;
+    }
+    // This is where the Firebase job creation logic would go
+    Alert.alert('Success', 'Job posted successfully!');
+  };
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      <Text style={styles.title}>Post a Job</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Job Title"
+        value={title}
+        onChangeText={setTitle}
+      />
+
+      <TextInput
+        style={[styles.input, styles.multiline]}
+        placeholder="Job Description"
+        value={description}
+        onChangeText={setDescription}
+        multiline
+        numberOfLines={4}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Address or Location"
+        value={address}
+        onChangeText={setAddress}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Gate code, instructions, etc. (optional)"
+        value={instructions}
+        onChangeText={setInstructions}
+      />
+
+      <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
+        <Text style={styles.uploadButtonText}>Upload Photo</Text>
+      </TouchableOpacity>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {images.map((uri, index) => (
+          <Image key={index} source={{ uri }} style={styles.imagePreview} />
+        ))}
+      </ScrollView>
+
+      <TouchableOpacity style={styles.button} onPress={handlePostJob}>
+        <Text style={styles.buttonText}>Post Job</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 20,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#004d4d',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+  },
+  multiline: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  uploadButton: {
+    backgroundColor: '#e0f7f7',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  uploadButtonText: {
+    color: '#008080',
+    fontWeight: '600',
+  },
+  imagePreview: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  button: {
+    backgroundColor: '#008080',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
+
+export default PostJobScreen;

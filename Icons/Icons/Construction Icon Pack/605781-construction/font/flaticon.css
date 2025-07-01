@@ -1,0 +1,131 @@
+	/*
+  	Flaticon icon font: Flaticon
+  	Creation date: 25/10/2017 10:14
+  	*/
+
+@font-face {
+  font-family: "Flaticon";
+  src: url("./Flaticon.eot");
+  src: url("./Flaticon.eot?#iefix") format("embedded-opentype"),
+       url("./Flaticon.woff") format("woff"),
+       url("./Flaticon.ttf") format("truetype"),
+       url("./Flaticon.svg#Flaticon") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  @font-face {
+    font-family: "Flaticon";
+    src: url("./Flaticon.svg#Flaticon") format("svg");
+  }
+}
+
+[class^="flaticon-"]:before, [class*=" flaticon-"]:before,
+[class^="flaticon-"]:after, [class*=" flaticon-"]:after {   
+  font-family: Flaticon;
+        font-size: 20px;
+font-style: normal;
+margin-left: 20px;
+}
+
+.flaticon-001-suit:before { content: "\f100"; }
+.flaticon-002-welding:before { content: "\f101"; }
+.flaticon-003-chemicals:before { content: "\f102"; }
+.flaticon-004-stop:before { content: "\f103"; }
+.flaticon-005-biohazard:before { content: "\f104"; }
+.flaticon-006-gloves:before { content: "\f105"; }
+.flaticon-007-gas-mask:before { content: "\f106"; }
+.flaticon-008-boot:before { content: "\f107"; }
+.flaticon-009-mask:before { content: "\f108"; }
+.flaticon-010-eye:before { content: "\f109"; }
+.flaticon-011-safety-glasses-1:before { content: "\f10a"; }
+.flaticon-012-helmet-2:before { content: "\f10b"; }
+.flaticon-013-helmet-1:before { content: "\f10c"; }
+.flaticon-014-earmuffs:before { content: "\f10d"; }
+.flaticon-015-safety-glasses:before { content: "\f10e"; }
+.flaticon-016-transport:before { content: "\f10f"; }
+.flaticon-017-dumper-1:before { content: "\f110"; }
+.flaticon-018-dumper:before { content: "\f111"; }
+.flaticon-019-lorry:before { content: "\f112"; }
+.flaticon-020-digger:before { content: "\f113"; }
+.flaticon-021-door-2:before { content: "\f114"; }
+.flaticon-022-window-4:before { content: "\f115"; }
+.flaticon-023-fence-1:before { content: "\f116"; }
+.flaticon-024-fence:before { content: "\f117"; }
+.flaticon-025-window-3:before { content: "\f118"; }
+.flaticon-026-blueprint-3:before { content: "\f119"; }
+.flaticon-027-roundabout:before { content: "\f11a"; }
+.flaticon-028-joint-3:before { content: "\f11b"; }
+.flaticon-029-joint-2:before { content: "\f11c"; }
+.flaticon-030-crossroad:before { content: "\f11d"; }
+.flaticon-031-door-1:before { content: "\f11e"; }
+.flaticon-032-door:before { content: "\f11f"; }
+.flaticon-033-paving-4:before { content: "\f120"; }
+.flaticon-034-joint-1:before { content: "\f121"; }
+.flaticon-035-paving-3:before { content: "\f122"; }
+.flaticon-036-paving-2:before { content: "\f123"; }
+.flaticon-037-lights-1:before { content: "\f124"; }
+.flaticon-038-lights:before { content: "\f125"; }
+.flaticon-039-window-2:before { content: "\f126"; }
+.flaticon-040-helmet:before { content: "\f127"; }
+.flaticon-041-joint:before { content: "\f128"; }
+.flaticon-042-window-1:before { content: "\f129"; }
+.flaticon-043-window:before { content: "\f12a"; }
+.flaticon-044-paving-1:before { content: "\f12b"; }
+.flaticon-045-paving:before { content: "\f12c"; }
+.flaticon-046-crossing:before { content: "\f12d"; }
+.flaticon-047-road-1:before { content: "\f12e"; }
+.flaticon-048-road:before { content: "\f12f"; }
+.flaticon-049-blueprint-2:before { content: "\f130"; }
+.flaticon-050-blueprint-1:before { content: "\f131"; }
+.flaticon-051-drawing:before { content: "\f132"; }
+.flaticon-052-blueprint:before { content: "\f133"; }
+.flaticon-053-concrete-mixer:before { content: "\f134"; }
+.flaticon-054-house:before { content: "\f135"; }
+.flaticon-055-ladder-1:before { content: "\f136"; }
+.flaticon-056-ladder:before { content: "\f137"; }
+.flaticon-057-drain-1:before { content: "\f138"; }
+.flaticon-058-drain:before { content: "\f139"; }
+.flaticon-059-crane-2:before { content: "\f13a"; }
+.flaticon-060-tiles-1:before { content: "\f13b"; }
+.flaticon-061-tiles:before { content: "\f13c"; }
+.flaticon-062-parquet:before { content: "\f13d"; }
+.flaticon-063-pipe-1:before { content: "\f13e"; }
+.flaticon-064-crane-1:before { content: "\f13f"; }
+.flaticon-065-bracket-1:before { content: "\f140"; }
+.flaticon-066-bracket:before { content: "\f141"; }
+.flaticon-067-brickwall:before { content: "\f142"; }
+.flaticon-068-plastering:before { content: "\f143"; }
+.flaticon-069-brick:before { content: "\f144"; }
+.flaticon-070-vest:before { content: "\f145"; }
+.flaticon-071-joist-4:before { content: "\f146"; }
+.flaticon-072-joist-3:before { content: "\f147"; }
+.flaticon-073-joist-2:before { content: "\f148"; }
+.flaticon-074-joist-1:before { content: "\f149"; }
+.flaticon-075-joist:before { content: "\f14a"; }
+.flaticon-076-block:before { content: "\f14b"; }
+.flaticon-077-beam-8:before { content: "\f14c"; }
+.flaticon-078-pipe:before { content: "\f14d"; }
+.flaticon-079-beam-7:before { content: "\f14e"; }
+.flaticon-080-beam-6:before { content: "\f14f"; }
+.flaticon-081-beam-5:before { content: "\f150"; }
+.flaticon-082-beam-4:before { content: "\f151"; }
+.flaticon-083-beam-3:before { content: "\f152"; }
+.flaticon-084-beam-2:before { content: "\f153"; }
+.flaticon-085-beam-1:before { content: "\f154"; }
+.flaticon-086-beam:before { content: "\f155"; }
+.flaticon-087-scaffolding-4:before { content: "\f156"; }
+.flaticon-088-scaffolding-3:before { content: "\f157"; }
+.flaticon-089-caster:before { content: "\f158"; }
+.flaticon-090-brace:before { content: "\f159"; }
+.flaticon-091-clamp-2:before { content: "\f15a"; }
+.flaticon-092-clamp-1:before { content: "\f15b"; }
+.flaticon-093-clamp:before { content: "\f15c"; }
+.flaticon-094-scaffolding-2:before { content: "\f15d"; }
+.flaticon-095-scaffolding-1:before { content: "\f15e"; }
+.flaticon-096-scaffolding:before { content: "\f15f"; }
+.flaticon-097-crane:before { content: "\f160"; }
+.flaticon-098-barrier-1:before { content: "\f161"; }
+.flaticon-099-cone:before { content: "\f162"; }
+.flaticon-100-barrier:before { content: "\f163"; }
