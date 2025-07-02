@@ -1,44 +1,46 @@
+// HomeScreen.js
 import React from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen() {
+  const completedJobs = [
+    { id: '1', title: 'Repaired drywall in kitchen' },
+    { id: '2', title: 'Installed faucet for client' },
+  ];
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Welcome to Mender</Text>
-      <Text style={styles.subtext}>Your hub for hiring and handling jobs.</Text>
-      <View style={styles.buttons}>
-        <Button title="Post a Job" onPress={() => navigation.navigate('PostJobScreen')} />
-        <Button title="View Open Jobs" onPress={() => navigation.navigate('OpenJobsScreen')} />
-        <Button title="My Jobs" onPress={() => navigation.navigate('MyJobsScreen')} />
-      </View>
+      <Text style={styles.header}>Your Jobs</Text>
+      <FlatList
+        data={completedJobs}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <Text style={styles.jobTitle}>{item.title}</Text>
+          </View>
+        )}
+        ListEmptyComponent={<Text>No jobs yet</Text>}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   header: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#008080',
-    fontFamily: 'MenderFont',
     marginBottom: 12,
-    textAlign: 'center',
+    color: '#008080',
   },
-  subtext: {
+  card: {
+    padding: 16,
+    backgroundColor: '#f2f2f2',
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  jobTitle: {
     fontSize: 16,
     color: '#333',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  buttons: {
-    width: '100%',
-    gap: 16,
   },
 });

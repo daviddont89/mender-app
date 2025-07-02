@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, Button, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { getDoc, doc } from 'firebase/firestore';
 import { auth, db } from './firebase';
@@ -21,9 +21,9 @@ export default function JobDetailsScreen() {
         }
         const user = auth.currentUser;
         if (user) setUserId(user.uid);
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching job:', error);
+      } finally {
         setLoading(false);
       }
     };
@@ -32,11 +32,20 @@ export default function JobDetailsScreen() {
   }, [jobId]);
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#008080" style={styles.loader} />;
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#00bcd4" />
+        <Text>Loading job details...</Text>
+      </View>
+    );
   }
 
   if (!job) {
-    return <Text style={styles.errorText}>Job not found</Text>;
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Job not found</Text>
+      </View>
+    );
   }
 
   const isClient = userId === job.clientId;
@@ -47,39 +56,39 @@ export default function JobDetailsScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{job.title}</Text>
       <Text style={styles.urgency}>Urgency: {job.urgency || 'Normal'}</Text>
-      {job.scheduledTime && (
-        <Text style={styles.scheduled}>Scheduled: {job.scheduledTime}</Text>
-      )}
-      <Text style={styles.description}>{job.description}</Text>
 
-      {job.photos?.length > 0 &&
-        job.photos.map((url, index) => (
-          <Image
-            key={index}
-            source={{ uri: url }}
-            style={styles.image}
-            resizeMode="cover"
-          />
-        ))}
+      {job.scheduledTime && (
+        <Text style={styles.scheduledTime}>Scheduled: {job.scheduledTime}</Text>
+      )}
+
+      <Text style={styles.sectionHeader}>Description</Text>
+      <Text style={styles.description}>{job.description}</Text>
 
       {showFullDetails && (
         <>
-          <Text style={styles.details}>Address: {job.address || 'N/A'}</Text>
-          <Text style={styles.details}>Gate Code: {job.gateCode || 'N/A'}</Text>
-          <Text style={styles.details}>Special Instructions: {job.instructions || 'None'}</Text>
-          <Text style={styles.details}>Client Contact: {job.clientName} ({job.clientPhone})</Text>
+          {job.address && (
+            <>
+              <Text style={styles.sectionHeader}>Address</Text>
+              <Text style={styles.detailText}>{job.address}</Text>
+            </>
+          )}
+
+          {job.specialInstructions && (
+            <>
+              <Text style={styles.sectionHeader}>Instructions</Text>
+              <Text style={styles.detailText}>{job.specialInstructions}</Text>
+            </>
+          )}
         </>
       )}
 
-      {!isAssignedContractor && !isClient && (
-        <Button
-          title="Accept Job"
-          onPress={() => {
-            // handle acceptance logic
-            console.log('Accept button pressed');
-          }}
-          color="#008080"
-        />
+      {job.photos && job.photos.length > 0 && (
+        <>
+          <Text style={styles.sectionHeader}>Photos</Text>
+          {job.photos.map((uri, index) => (
+            <Image key={index} source={{ uri }} style={styles.image} />
+          ))}
+        </>
       )}
     </ScrollView>
   );
@@ -87,49 +96,60 @@ export default function JobDetailsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 16,
     backgroundColor: '#fff',
   },
-  loader: {
-    marginTop: 50,
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#008080',
-    marginBottom: 10,
-    fontFamily: 'MenderFont',
+    fontWeight: '700',
+    color: '#222',
+    marginBottom: 8,
   },
   urgency: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#ff4500',
-    marginBottom: 5,
-  },
-  scheduled: {
-    fontSize: 16,
-    color: '#444',
+    color: '#f44336',
     marginBottom: 10,
+  },
+  scheduledTime: {
+    fontSize: 16,
+    color: '#00897b',
+    marginBottom: 10,
+  },
+  sectionHeader: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#444',
   },
   description: {
     fontSize: 16,
-    color: '#333',
-    marginBottom: 12,
+    color: '#555',
+    marginTop: 4,
   },
-  details: {
+  detailText: {
     fontSize: 16,
-    color: '#444',
-    marginBottom: 8,
+    color: '#666',
+    marginTop: 4,
   },
   image: {
-    width: '100%',
     height: 200,
-    marginVertical: 10,
-    borderRadius: 8,
-  },
-  errorText: {
-    marginTop: 50,
-    textAlign: 'center',
-    color: 'red',
+    width: '100%',
+    borderRadius: 10,
+    marginTop: 10,
+    resizeMode: 'cover',
   },
 });

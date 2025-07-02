@@ -1,6 +1,9 @@
+// SignUpScreen.js
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from './firebase';
 
 export default function SignUpScreen() {
   const navigation = useNavigation();
@@ -8,9 +11,17 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSignUp = () => {
-    // TODO: handle sign-up logic
-    console.log('Signing up with:', email, password);
+  const handleSignUp = async () => {
+    if (password !== confirmPassword) {
+      Alert.alert("Passwords don't match", 'Please make sure your passwords match.');
+      return;
+    }
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      navigation.replace('Home');
+    } catch (error) {
+      Alert.alert('Signup Failed', error.message);
+    }
   };
 
   return (
@@ -20,11 +31,12 @@ export default function SignUpScreen() {
         style={styles.banner}
         resizeMode="contain"
       />
-      <Text style={styles.header}>Sign Up</Text>
+      <Text style={styles.header}>Create Your Mender Account</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
         autoCapitalize="none"
+        keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
       />
@@ -43,9 +55,9 @@ export default function SignUpScreen() {
         onChangeText={setConfirmPassword}
       />
       <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-        <Text style={styles.buttonText}>Create Account</Text>
+        <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')}>
+      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
         <Text style={styles.link}>Already have an account? Log in</Text>
       </TouchableOpacity>
     </View>
@@ -67,8 +79,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#008080',
     marginBottom: 20,
     fontFamily: 'MenderFont',
@@ -81,6 +93,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     borderRadius: 8,
+    backgroundColor: '#f9f9f9',
   },
   button: {
     backgroundColor: '#008080',
@@ -89,6 +102,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 8,
     marginBottom: 16,
+    width: '100%',
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',

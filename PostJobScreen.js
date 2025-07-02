@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Image, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function PostJobScreen() {
@@ -14,34 +14,59 @@ export default function PostJobScreen() {
       quality: 1,
     });
 
-    if (!result.cancelled) {
-      setMedia([...media, result.uri]);
+    if (!result.canceled) {
+      const newUri = result.assets?.[0]?.uri || result.uri;
+      setMedia([...media, newUri]);
     }
+  };
+
+  const handleSubmit = () => {
+    if (!title || !description) {
+      Alert.alert('Missing Fields', 'Please enter both title and description.');
+      return;
+    }
+
+    // Submit logic (to be replaced with Firebase integration)
+    console.log('Job submitted:', { title, description, media });
+    Alert.alert('Success', 'Your job has been posted!');
+    setTitle('');
+    setDescription('');
+    setMedia([]);
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.header}>Post a Job</Text>
+
+      <Text style={styles.label}>Job Title</Text>
       <TextInput
-        placeholder="Job Title"
         value={title}
         onChangeText={setTitle}
+        placeholder="Enter job title"
         style={styles.input}
       />
+
+      <Text style={styles.label}>Job Description</Text>
       <TextInput
-        placeholder="Job Description"
         value={description}
         onChangeText={setDescription}
-        style={[styles.input, styles.multiline]}
+        placeholder="Enter job description"
         multiline
         numberOfLines={4}
+        style={[styles.input, styles.textArea]}
       />
-      <Button title="Upload Photos or Videos" onPress={pickMedia} />
-      <View style={styles.mediaPreview}>
-        {media.map((uri, index) => (
-          <Image key={index} source={{ uri }} style={styles.previewImage} />
+
+      <TouchableOpacity style={styles.uploadButton} onPress={pickMedia}>
+        <Text style={styles.uploadText}>Upload Photos or Videos</Text>
+      </TouchableOpacity>
+
+      <View style={styles.mediaContainer}>
+        {media.map((uri, idx) => (
+          <Image key={idx} source={{ uri }} style={styles.mediaPreview} />
         ))}
       </View>
-      <Button title="Submit Job" onPress={() => console.log('Job posted')} />
+
+      <Button title="Submit Job" onPress={handleSubmit} color="#00bcd4" />
     </ScrollView>
   );
 }
@@ -51,27 +76,53 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
   },
+  header: {
+    fontSize: 24,
+    fontWeight: '600',
+    marginBottom: 16,
+    color: '#222',
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: 12,
+    marginBottom: 6,
+    color: '#333',
+  },
   input: {
-    borderColor: '#008080',
     borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
-    marginBottom: 16,
     fontSize: 16,
+    backgroundColor: '#f9f9f9',
   },
-  multiline: {
+  textArea: {
     height: 100,
     textAlignVertical: 'top',
   },
-  mediaPreview: {
+  uploadButton: {
+    backgroundColor: '#00bcd4',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 16,
+    alignItems: 'center',
+  },
+  uploadText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  mediaContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginVertical: 16,
-    gap: 10,
+    marginBottom: 20,
   },
-  previewImage: {
+  mediaPreview: {
     width: 100,
     height: 100,
     borderRadius: 8,
+    marginRight: 10,
+    marginBottom: 10,
   },
 });

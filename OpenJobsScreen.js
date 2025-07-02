@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
@@ -7,6 +7,7 @@ import { db } from './firebase';
 export default function OpenJobsScreen() {
   const navigation = useNavigation();
   const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -16,6 +17,8 @@ export default function OpenJobsScreen() {
         setJobs(jobList);
       } catch (error) {
         console.error('Error fetching jobs:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -28,12 +31,21 @@ export default function OpenJobsScreen() {
       onPress={() => navigation.navigate('JobDetails', { jobId: item.id })}
     >
       <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.description}>{item.description}</Text>
+      <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
       {item.photos?.[0] && (
         <Image source={{ uri: item.photos[0] }} style={styles.image} />
       )}
     </TouchableOpacity>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#00bcd4" />
+        <Text>Loading jobs...</Text>
+      </View>
+    );
+  }
 
   return (
     <FlatList
@@ -41,6 +53,7 @@ export default function OpenJobsScreen() {
       keyExtractor={item => item.id}
       renderItem={renderJob}
       contentContainerStyle={styles.container}
+      ListEmptyComponent={<Text style={styles.emptyText}>No open jobs available.</Text>}
     />
   );
 }
@@ -48,28 +61,46 @@ export default function OpenJobsScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+    backgroundColor: '#fff',
+    minHeight: '100%',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
     padding: 16,
     marginBottom: 12,
-    borderRadius: 10,
-    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#008080',
+    fontWeight: '600',
+    marginBottom: 6,
+    color: '#222',
   },
   description: {
     fontSize: 14,
-    color: '#333',
-    marginTop: 6,
+    color: '#666',
+    marginBottom: 10,
   },
   image: {
-    marginTop: 10,
+    height: 180,
     width: '100%',
-    height: 160,
     borderRadius: 8,
+    resizeMode: 'cover',
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 40,
+    fontSize: 16,
+    color: '#888',
   },
 });

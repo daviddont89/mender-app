@@ -1,5 +1,3 @@
-// MyJobsScreen.js
-
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -9,7 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Pressable
+  Pressable,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -19,7 +17,7 @@ export default function MyJobsScreen() {
   const [acceptedJobs, setAcceptedJobs] = useState([]);
   const [completedJobs, setCompletedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState('urgency'); // or 'date'
+  const [sortBy, setSortBy] = useState('urgency');
   const navigation = useNavigation();
   const user = auth.currentUser;
 
@@ -42,24 +40,31 @@ export default function MyJobsScreen() {
 
         const [acceptedSnap, completedSnap] = await Promise.all([
           getDocs(acceptedQuery),
-          getDocs(completedQuery)
+          getDocs(completedQuery),
         ]);
 
         const sortJobs = (jobs) => {
           return jobs.sort((a, b) => {
             if (sortBy === 'urgency') {
-              const order = { Emergency: 1, Normal: 2, Flexible: 3 };
-              return (order[a.urgency] || 4) - (order[b.urgency] || 4);
+              return (b.urgencyLevel || 0) - (a.urgencyLevel || 0);
             } else {
-              return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+              return new Date(b.createdAt) - new Date(a.createdAt);
             }
           });
         };
 
-        setAcceptedJobs(sortJobs(acceptedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
-        setCompletedJobs(sortJobs(completedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
+        const acceptedData = sortJobs(
+          acceptedSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
+
+        const completedData = sortJobs(
+          completedSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
+
+        setAcceptedJobs(acceptedData);
+        setCompletedJobs(completedData);
       } catch (error) {
-        console.error('Error fetching contractor jobs:', error);
+        console.error('Error fetching jobs:', error);
       } finally {
         setLoading(false);
       }
@@ -68,132 +73,116 @@ export default function MyJobsScreen() {
     fetchJobs();
   }, [sortBy]);
 
-  const renderJob = ({ item }) => (
+  const renderJobCard = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => navigation.navigate('JobDetails', { jobId: item.id })}
+      onPress={() => navigation.navigate('JobDetailsScreen', { job: item })}
     >
-      <View style={styles.cardHeader}>
-        <Text style={styles.jobTitle}>{item.title}</Text>
-        <Text style={[styles.urgencyBadge, getUrgencyStyle(item.urgency)]}>
-          {item.urgency || 'Normal'}
+      {item.image && <Image source={{ uri: item.image }} style={styles.image} />}
+      <View style={styles.cardContent}>
+        <Text style={styles.cardTitle}>{item.title}</Text>
+        <Text style={styles.cardDesc} numberOfLines={2}>
+          {item.description}
         </Text>
       </View>
-      <Text style={styles.jobDescription}>{item.description}</Text>
-      {item.photos && item.photos[0] && (
-        <Image source={{ uri: item.photos[0] }} style={styles.photo} />
-      )}
     </TouchableOpacity>
   );
 
-  const getUrgencyStyle = (urgency) => {
-    switch (urgency) {
-      case 'Emergency':
-        return { backgroundColor: '#cc0000' };
-      case 'Normal':
-        return { backgroundColor: '#008000' };
-      case 'Flexible':
-        return { backgroundColor: '#0066cc' };
-      default:
-        return { backgroundColor: '#999' };
-    }
-  };
-
-  if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#00bcd4" />
+        <Text style={{ marginTop: 12 }}>Loading your jobs...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <View style={styles.sortRow}>
-        <Text style={styles.header}>My Jobs</Text>
-        <View style={styles.sortButtons}>
-          <Pressable
-            style={[styles.sortOption, sortBy === 'urgency' && styles.activeSort]}
-            onPress={() => setSortBy('urgency')}
-          >
-            <Text style={styles.sortText}>Urgency</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.sortOption, sortBy === 'date' && styles.activeSort]}
-            onPress={() => setSortBy('date')}
-          >
-            <Text style={styles.sortText}>Date</Text>
-          </Pressable>
-        </View>
-      </View>
+      <Text style={styles.header}>My Jobs</Text>
 
-      <Text style={styles.subheader}>Accepted</Text>
-      {acceptedJobs.length === 0 ? (
-        <Text style={styles.emptyText}>You have no accepted jobs.</Text>
-      ) : (
+      <Text style={styles.sectionTitle}>Accepted Jobs</Text>
+      {acceptedJobs.length > 0 ? (
         <FlatList
           data={acceptedJobs}
-          keyExtractor={item => item.id}
-          renderItem={renderJob}
-          contentContainerStyle={styles.list}
+          keyExtractor={(item) => item.id}
+          renderItem={renderJobCard}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 12 }}
         />
+      ) : (
+        <Text style={styles.emptyText}>No accepted jobs right now.</Text>
       )}
 
-      <Text style={styles.subheader}>Completed</Text>
-      {completedJobs.length === 0 ? (
-        <Text style={styles.emptyText}>No jobs completed yet.</Text>
-      ) : (
+      <Text style={styles.sectionTitle}>Completed Jobs</Text>
+      {completedJobs.length > 0 ? (
         <FlatList
           data={completedJobs}
-          keyExtractor={item => item.id}
-          renderItem={renderJob}
-          contentContainerStyle={styles.list}
+          keyExtractor={(item) => item.id}
+          renderItem={renderJobCard}
         />
+      ) : (
+        <Text style={styles.emptyText}>No completed jobs yet.</Text>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'white', paddingHorizontal: 16, paddingTop: 16 },
-  header: { fontSize: 24, fontWeight: 'bold', color: '#008080' },
-  subheader: { fontSize: 18, fontWeight: 'bold', marginTop: 20, marginBottom: 5 },
-  list: { paddingBottom: 30 },
-  card: {
-    backgroundColor: '#f8f8f8',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10
+  container: {
+    padding: 20,
+    backgroundColor: '#fff',
+    flex: 1,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  jobTitle: { fontSize: 16, fontWeight: 'bold', color: '#000' },
-  jobDescription: { fontSize: 14, color: '#333', marginTop: 4 },
-  photo: { width: '100%', height: 160, borderRadius: 10, marginTop: 10 },
-  emptyText: { fontSize: 14, color: '#888', fontStyle: 'italic', marginBottom: 20 },
-  urgencyBadge: {
-    color: 'white',
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    fontSize: 12,
-    overflow: 'hidden'
-  },
-  sortRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10
   },
-  sortButtons: { flexDirection: 'row', gap: 10 },
-  sortOption: {
-    backgroundColor: '#ddd',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8
+  header: {
+    fontSize: 26,
+    fontWeight: '600',
+    marginBottom: 20,
+    color: '#222',
   },
-  activeSort: {
-    backgroundColor: '#008080'
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginTop: 10,
+    marginBottom: 8,
+    color: '#333',
   },
-  sortText: {
-    color: 'white',
-    fontWeight: 'bold'
-  }
+  card: {
+    flexDirection: 'row',
+    backgroundColor: '#f2f2f2',
+    borderRadius: 10,
+    marginBottom: 12,
+    overflow: 'hidden',
+    elevation: 2,
+    marginRight: 10,
+  },
+  image: {
+    width: 80,
+    height: 80,
+  },
+  cardContent: {
+    padding: 10,
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111',
+  },
+  cardDesc: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 4,
+  },
+  emptyText: {
+    fontStyle: 'italic',
+    color: '#888',
+    marginBottom: 12,
+  },
 });

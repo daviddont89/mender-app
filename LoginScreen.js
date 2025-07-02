@@ -1,15 +1,22 @@
+// LoginScreen.js
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from './firebase';
 
 export default function LoginScreen() {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // TODO: implement login logic
-    console.log('Logging in with:', email, password);
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigation.replace('Home');
+    } catch (error) {
+      Alert.alert('Login Failed', error.message);
+    }
   };
 
   return (
@@ -26,6 +33,7 @@ export default function LoginScreen() {
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
+        keyboardType="email-address"
       />
       <TextInput
         style={styles.input}
@@ -37,7 +45,7 @@ export default function LoginScreen() {
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Log In</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('SignUpScreen')}>
+      <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
         <Text style={styles.link}>Don't have an account? Sign up</Text>
       </TouchableOpacity>
     </View>
