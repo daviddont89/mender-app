@@ -1,76 +1,36 @@
 // MenderSplashScreen.js
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  Animated,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Image, StyleSheet } from 'react-native';
 
-const MenderSplashScreen = () => {
-  const navigation = useNavigation();
-  const waveAnim = new Animated.Value(0);
-
+export default function MenderSplashScreen({ navigation }) {
   useEffect(() => {
-    // Wave animation loop
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(waveAnim, {
-          toValue: 10,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(waveAnim, {
-          toValue: -10,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
+    const timer = setTimeout(() => {
+      navigation.replace('Screen1'); // Navigate to onboarding/tutorial
+    }, 2000); // 2 seconds
 
-    // Navigate after 3 seconds
-    const timeout = setTimeout(() => {
-      navigation.replace('MenderOnboardingScreens');
-    }, 3000);
-
-    return () => clearTimeout(timeout);
-  }, []);
+    return () => clearTimeout(timer);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
       <Image
         source={require('./Icons/mender-banner.png')}
-        style={styles.title}
-      />
-      <Animated.Image
-        source={require('./Icons/tealwave.png')}
-        style={[styles.wave, { transform: [{ translateY: waveAnim }] }]}
+        style={styles.logo}
+        resizeMode="contain"
       />
     </View>
   );
-};
-
-export default MenderSplashScreen;
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
+    backgroundColor: '#fff',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  title: {
-    width: '80%',
-    height: undefined,
-    aspectRatio: 4,
-    resizeMode: 'contain',
-    marginBottom: 30,
-  },
-  wave: {
-    width: '100%',
+  logo: {
+    width: '90%',
     height: 100,
-    resizeMode: 'contain',
   },
 });
