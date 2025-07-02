@@ -8,17 +8,17 @@ const MenderSplashScreen = ({ navigation }) => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.replace('Screen1');
-    }, 3000); // adjust time as needed
+      navigation.replace('Screen1'); // Replace with your first onboarding screen
+    }, 3000); // Adjust time to match animation length
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
       <LottieView
         ref={animationRef}
-        source={require('./assets/mender-wave-splash.json')}
+        source={require('./assets/mender_wave.json')}// ✅ fixed path + correct file name
         autoPlay
         loop={false}
         style={styles.animation}
@@ -31,6 +31,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   animation: {
     width: Dimensions.get('window').width,

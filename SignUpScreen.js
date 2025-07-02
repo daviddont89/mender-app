@@ -49,11 +49,11 @@ const SignUpScreen = ({ navigation }) => {
 
       <View style={styles.iconRow}>
         <TouchableOpacity onPress={() => Alert.alert('Google sign-in coming soon')}>  
-          <Image source={require('./Icons/Icons/google.png')} style={styles.icon} />
+          <Image source={require('./Icons/google.png')} style={styles.icon} />
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => Alert.alert('Facebook sign-in coming soon')}>  
-          <Image source={require('./Icons/Icons/facebook.png')} style={styles.icon} />
+          <Image source={require('./Icons/facebook.png')} style={styles.icon} />
         </TouchableOpacity>
       </View>
 

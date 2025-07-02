@@ -1,29 +1,24 @@
 // App.js
+
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { onAuthStateChanged } from 'firebase/auth';
+import OnboardingNavigator from './MenderOnboardingScreens';
+import MainAppNavigator from './MainAppNavigator';
 import { auth } from './firebase';
-import { ActivityIndicator } from 'react-native';
-import AppNavigator from './AppNavigator';
-import AuthNavigator from './AuthNavigator';
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setChecking(false);
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u);
     });
     return unsubscribe;
   }, []);
 
-  if (checking) return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
-
   return (
     <NavigationContainer>
-      {user ? <AppNavigator /> : <AuthNavigator />}
+      {user ? <MainAppNavigator /> : <OnboardingNavigator />}
     </NavigationContainer>
   );
 }

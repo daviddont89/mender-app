@@ -1,7 +1,16 @@
 // JobDetailsScreen.js
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, Button, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Button,
+  ActivityIndicator,
+  TouchableOpacity
+} from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from './firebase';
@@ -53,7 +62,7 @@ export default function JobDetailsScreen() {
   };
 
   const handleDecline = () => {
-    navigation.goBack(); // Or navigate to Open Jobs screen
+    navigation.goBack();
   };
 
   const handleComplete = async () => {
@@ -81,24 +90,41 @@ export default function JobDetailsScreen() {
         <Image key={idx} source={{ uri }} style={styles.image} />
       ))}
 
-      <View style={styles.details}>
+      <View style={styles.detailsBox}>
         <Text style={styles.label}>Location:</Text>
-        <Text>{job.location}</Text>
+        <Text style={styles.value}>{job.location || 'N/A'}</Text>
+
+        <Text style={styles.label}>Scheduled Date/Time:</Text>
+        <Text style={styles.value}>
+          {job.date || 'Unscheduled'} {job.timeWindow ? `from ${job.timeWindow}` : ''}
+        </Text>
+
         <Text style={styles.label}>Contact Info:</Text>
-        <Text>{job.contact}</Text>
+        <Text style={styles.value}>{job.contact || 'N/A'}</Text>
+
+        <Text style={styles.label}>Gate Code:</Text>
+        <Text style={styles.value}>{job.gateCode || 'N/A'}</Text>
+
+        <Text style={styles.label}>Special Instructions:</Text>
+        <Text style={styles.value}>{job.instructions || 'None'}</Text>
       </View>
 
-      {/* Show buttons based on job state */}
       {user && !isClient && (
         <View style={styles.buttonGroup}>
           {showAcceptDecline && (
             <>
-              <Button title="Accept Job" onPress={handleAccept} color="#008080" />
-              <Button title="Decline" onPress={handleDecline} color="gray" />
+              <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
+                <Text style={styles.buttonText}>Accept Job</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
+                <Text style={styles.buttonText}>Decline</Text>
+              </TouchableOpacity>
             </>
           )}
           {job.status === 'accepted' && isAssignedToUser && (
-            <Button title="Complete Job" onPress={handleComplete} color="#008080" />
+            <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+              <Text style={styles.buttonText}>Mark as Completed</Text>
+            </TouchableOpacity>
           )}
         </View>
       )}
@@ -107,11 +133,69 @@ export default function JobDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: 'white' },
-  title: { fontSize: 24, fontWeight: 'bold', color: 'black', marginBottom: 10 },
-  description: { fontSize: 16, color: '#333', marginBottom: 10 },
-  image: { width: '100%', height: 200, resizeMode: 'cover', marginBottom: 10, borderRadius: 10 },
-  details: { marginTop: 20 },
-  label: { fontWeight: 'bold', marginTop: 10 },
-  buttonGroup: { marginTop: 20, gap: 10 }
+  container: {
+    padding: 16,
+    backgroundColor: 'white',
+    flex: 1,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'MenderFont', // Make sure this font is loaded
+    color: 'black',
+    marginBottom: 12,
+  },
+  description: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 16,
+  },
+  image: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  detailsBox: {
+    backgroundColor: '#e0f7f7',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  label: {
+    fontWeight: 'bold',
+    marginTop: 8,
+    color: '#008080',
+  },
+  value: {
+    color: '#000',
+    marginBottom: 6,
+  },
+  buttonGroup: {
+    marginTop: 16,
+    gap: 12,
+  },
+  acceptButton: {
+    backgroundColor: '#008080',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  declineButton: {
+    backgroundColor: '#999',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  completeButton: {
+    backgroundColor: '#006666',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
