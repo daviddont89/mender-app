@@ -1,38 +1,32 @@
-// Screen 6: Firebase Login Screen
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { firebaseApp } from './firebase';
+import { View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const auth = getAuth(firebaseApp);
-
-const LoginScreen = ({ navigation }) => {
+export default function LoginScreen() {
+  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert('Welcome back!', 'Login successful');
-      navigation.navigate('MainHome');
-    } catch (error) {
-      Alert.alert('Login Failed', error.message);
-    }
+  const handleLogin = () => {
+    // TODO: implement login logic
+    console.log('Logging in with:', email, password);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Log In</Text>
-
+      <Image
+        source={require('./Icons/mender-banner.png')}
+        style={styles.banner}
+        resizeMode="contain"
+      />
+      <Text style={styles.header}>Log In</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
-        keyboardType="email-address"
         autoCapitalize="none"
       />
-
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -40,56 +34,61 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setPassword}
         secureTextEntry
       />
-
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Log In</Text>
       </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-        <Text style={styles.signupText}>Don't have an account? Sign up</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('SignUpScreen')}>
+        <Text style={styles.link}>Don't have an account? Sign up</Text>
       </TouchableOpacity>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#fff',
+    padding: 24,
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#004d4d',
+  banner: {
+    width: '100%',
+    maxWidth: 320,
+    height: 100,
+    marginBottom: 24,
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#008080',
     marginBottom: 20,
+    fontFamily: 'MenderFont',
     textAlign: 'center',
   },
   input: {
+    width: '100%',
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
     padding: 12,
-    marginBottom: 15,
+    marginBottom: 12,
+    borderRadius: 8,
   },
   button: {
     backgroundColor: '#008080',
-    padding: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
     borderRadius: 8,
-    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 16,
   },
   buttonText: {
     color: '#fff',
+    fontWeight: 'bold',
     fontSize: 16,
-    fontWeight: '600',
   },
-  signupText: {
-    textAlign: 'center',
+  link: {
     color: '#008080',
     fontSize: 14,
-    marginTop: 10,
   },
 });
-
-export default LoginScreen;

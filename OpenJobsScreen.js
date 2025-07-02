@@ -1,176 +1,75 @@
-// Screen 7: Post a Job (with Firestore)
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { firebaseApp } from './firebase';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from './firebase';
 
-const db = getFirestore(firebaseApp);
-const auth = getAuth(firebaseApp);
+export default function OpenJobsScreen() {
+  const navigation = useNavigation();
+  const [jobs, setJobs] = useState([]);
 
-const PostJobScreen = ({ navigation }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [address, setAddress] = useState('');
-  const [instructions, setInstructions] = useState('');
-  const [images, setImages] = useState([]);
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'jobs'));
+        const jobList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setJobs(jobList);
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+      }
+    };
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      quality: 1,
-    });
-    if (!result.canceled) {
-      setImages([...images, result.assets[0].uri]);
-    }
-  };
+    fetchJobs();
+  }, []);
 
-  const handlePostJob = async () => {
-    if (!title || !description || !address) {
-      Alert.alert('Missing Info', 'Please fill in all required fields.');
-      return;
-    }
-    try {
-      const user = auth.currentUser;
-      const docRef = await addDoc(collection(db, 'jobs'), {
-        title,
-        description,
-        address,
-        instructions,
-        imageURIs: images,
-        status: 'pending',
-        createdAt: serverTimestamp(),
-        userId: user ? user.uid : null,
-      });
-      Alert.alert('Success', 'Job posted successfully!');
-      setTitle('');
-      setDescription('');
-      setAddress('');
-      setInstructions('');
-      setImages([]);
-    } catch (error) {
-      Alert.alert('Error', error.message);
-    }
-  };
+  const renderJob = ({ item }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate('JobDetails', { jobId: item.id })}
+    >
+      <Text style={styles.title}>{item.title}</Text>
+      <Text style={styles.description}>{item.description}</Text>
+      {item.photos?.[0] && (
+        <Image source={{ uri: item.photos[0] }} style={styles.image} />
+      )}
+    </TouchableOpacity>
+  );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <Text style={styles.title}>Post a Job</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Job Title"
-        value={title}
-        onChangeText={setTitle}
-      />
-
-      <TextInput
-        style={[styles.input, styles.multiline]}
-        placeholder="Job Description"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        numberOfLines={4}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Address or Location"
-        value={address}
-        onChangeText={setAddress}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Gate code, instructions, etc. (optional)"
-        value={instructions}
-        onChangeText={setInstructions}
-      />
-
-      <TouchableOpacity
-        style={{
-          backgroundColor: '#008080',
-          padding: 15,
-          borderRadius: 10,
-          marginTop: 20,
-          alignItems: 'center',
-        }}
-        onPress={() => navigation.navigate('OpenJobs')}
-      >
-        <Text style={{ color: '#fff', fontWeight: '600' }}>View Open Jobs</Text>
-      </TouchableOpacity>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {images.map((uri, index) => (
-          <Image key={index} source={{ uri }} style={styles.imagePreview} />
-        ))}
-      </ScrollView>
-
-      <TouchableOpacity style={styles.button} onPress={handlePostJob}>
-        <Text style={styles.buttonText}>Post Job</Text>
-      </TouchableOpacity>
-    </ScrollView>
+    <FlatList
+      data={jobs}
+      keyExtractor={item => item.id}
+      renderItem={renderJob}
+      contentContainerStyle={styles.container}
+    />
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
+    padding: 16,
   },
-  scrollContent: {
-    paddingBottom: 40,
+  card: {
+    backgroundColor: '#fff',
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 10,
+    elevation: 2,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#004d4d',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
-  },
-  multiline: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  uploadButton: {
-    backgroundColor: '#e0f7f7',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  uploadButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#008080',
-    fontWeight: '600',
   },
-  imagePreview: {
-    width: 80,
-    height: 80,
+  description: {
+    fontSize: 14,
+    color: '#333',
+    marginTop: 6,
+  },
+  image: {
+    marginTop: 10,
+    width: '100%',
+    height: 160,
     borderRadius: 8,
-    marginRight: 10,
-  },
-  button: {
-    backgroundColor: '#008080',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
-
-export default PostJobScreen;

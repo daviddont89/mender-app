@@ -1,24 +1,14 @@
-// SplashScreen.js
-import React, { useEffect } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import LottieView from 'lottie-react-native';
+import React from 'react';
+import { View, Image, StyleSheet } from 'react-native';
 
-export default function SplashScreen({ navigation }) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Auth'); // Change to your real login stack
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, []);
-
+export default function SplashScreen() {
   return (
     <View style={styles.container}>
-     <LottieView
-  source={require('./assets/mender_wave.json')}
-  autoPlay
-  loop={false}
-  style={{ width: 300, height: 300 }}
-/>
+      <Image
+        source={require('./Icons/mender-banner.png')}
+        style={styles.banner}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -26,12 +16,14 @@ export default function SplashScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 30,
   },
-  animation: {
-    width: Dimensions.get('window').width * 0.9,
-    height: 300,
+  banner: {
+    width: '100%',
+    height: undefined,
+    aspectRatio: 5, // Adjust this if needed for proper banner proportions
   },
 });

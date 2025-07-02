@@ -1,56 +1,53 @@
-// Screen1.js
-
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 
-const Screen1 = () => {
-  const navigation = useNavigation();
-
+export default function Screen1() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Mender</Text>
-      <Text style={styles.text}>The easiest way to connect with trusted local handymen.</Text>
-
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Screen2')}>
-        <Text style={styles.buttonText}>Get Started</Text>
-      </TouchableOpacity>
-    </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Image
+        source={require('./Icons/mender-icon.png')} // Ensure this file exists
+        style={styles.icon}
+        resizeMode="contain"
+      />
+      <Text style={styles.header}>How Mender Works</Text>
+      <Text style={styles.paragraph}>
+        Mender connects clients with qualified contractors for household jobs.
+        Post a job, get matched, and track progress all within the app.
+      </Text>
+      <Text style={styles.paragraph}>
+        Clients pay $75/hr. Contractors earn $50/hr. All jobs include a one-hour
+        minimum, covering drive time.
+      </Text>
+      <Text style={styles.paragraph}>
+        Schedule, upload media, add gate codes, and rate jobs for better matches.
+      </Text>
+    </ScrollView>
   );
-};
-
-export default Screen1;
+}
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
+    backgroundColor: '#fff',
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 28,
+  icon: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+  },
+  header: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#008080',
     marginBottom: 16,
     fontFamily: 'MenderFont',
+    textAlign: 'center',
   },
-  text: {
+  paragraph: {
     fontSize: 16,
     color: '#333',
     textAlign: 'center',
-    marginBottom: 30,
-  },
-  button: {
-    backgroundColor: '#008080',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    marginBottom: 12,
   },
 });

@@ -1,31 +1,58 @@
 // MenderSplashScreen.js
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import LottieView from 'lottie-react-native';
+import React, { useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Animated,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const MenderSplashScreen = ({ navigation }) => {
-  const animationRef = useRef(null);
+const MenderSplashScreen = () => {
+  const navigation = useNavigation();
+  const waveAnim = new Animated.Value(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Screen1'); // Replace with your first onboarding screen
-    }, 3000); // Adjust time to match animation length
+    // Wave animation loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(waveAnim, {
+          toValue: 10,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(waveAnim, {
+          toValue: -10,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
 
-    return () => clearTimeout(timer);
-  }, [navigation]);
+    // Navigate after 3 seconds
+    const timeout = setTimeout(() => {
+      navigation.replace('MenderOnboardingScreens');
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   return (
     <View style={styles.container}>
-      <LottieView
-        ref={animationRef}
-        source={require('./assets/mender_wave.json')}// ✅ fixed path + correct file name
-        autoPlay
-        loop={false}
-        style={styles.animation}
+      <Image
+        source={require('./Icons/mender-banner.png')}
+        style={styles.title}
+      />
+      <Animated.Image
+        source={require('./Icons/tealwave.png')}
+        style={[styles.wave, { transform: [{ translateY: waveAnim }] }]}
       />
     </View>
   );
 };
+
+export default MenderSplashScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -34,10 +61,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  animation: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
+  title: {
+    width: '80%',
+    height: undefined,
+    aspectRatio: 4,
+    resizeMode: 'contain',
+    marginBottom: 30,
+  },
+  wave: {
+    width: '100%',
+    height: 100,
+    resizeMode: 'contain',
   },
 });
-
-export default MenderSplashScreen;

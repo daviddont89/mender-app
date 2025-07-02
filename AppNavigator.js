@@ -1,30 +1,32 @@
-// App.js
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-import MenderOnboardingScreens from './MenderOnboardingScreens';
-import AppNavigator from './AppNavigator';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { app } from './firebase'; // adjust path to your firebase config
 
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+import HomeScreen from './HomeScreen';
+import PostJobScreen from './PostJobScreen';
+import AccountScreen from './AccountScreen';
+import ContactScreen from './ContactScreen';
 
-  useEffect(() => {
-    const auth = getAuth(app);
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-    });
+const Drawer = createDrawerNavigator();
 
-    return () => unsubscribe();
-  }, []);
-
-  if (loading) return null; // optionally show splash
-
+export default function AppNavigator() {
   return (
     <NavigationContainer>
-      {user ? <AppNavigator /> : <MenderOnboardingScreens />}
+      <Drawer.Navigator
+        initialRouteName="MainHome"
+        screenOptions={{
+          headerShown: true,
+        }}
+      >
+        <Drawer.Screen name="MainHome" component={HomeScreen} options={{ title: 'Home' }} />
+        <Drawer.Screen name="PostJob" component={PostJobScreen} options={{ title: 'Jobs' }} />
+        <Drawer.Screen name="Account" component={AccountScreen} />
+        <Drawer.Screen name="Contact" component={ContactScreen} options={{ title: 'Contact Us' }} />
+        <Drawer.Screen name="JobDetails" component={JobDetailsScreen} />
+        <Drawer.Screen name="MyJobsScreen" component={MyJobsScreen} />
+        <Drawer.Screen name="OpenJobsScreen" component={OpenJobsScreen} />
+        <Drawer.Screen name="MyJobsScreen" component={MyJobsScreen} />
+        </Drawer.Navigator>
     </NavigationContainer>
   );
 }

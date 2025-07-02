@@ -1,40 +1,29 @@
-// JobDetailsScreen.js
-
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Button,
-  ActivityIndicator,
-  TouchableOpacity
-} from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db, auth } from './firebase';
+import { View, Text, StyleSheet, Image, ScrollView, Button, ActivityIndicator } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+import { getDoc, doc } from 'firebase/firestore';
+import { auth, db } from './firebase';
 
 export default function JobDetailsScreen() {
-  const [job, setJob] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigation = useNavigation();
   const route = useRoute();
-  const jobId = route.params?.jobId;
-
-  const user = auth.currentUser;
+  const { jobId } = route.params;
+  const [job, setJob] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const jobRef = doc(db, 'jobs', jobId);
-        const jobSnap = await getDoc(jobRef);
-        if (jobSnap.exists()) {
-          setJob({ id: jobSnap.id, ...jobSnap.data() });
+        const docRef = doc(db, 'jobs', jobId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setJob(docSnap.data());
         }
+        const user = auth.currentUser;
+        if (user) setUserId(user.uid);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching job:', error);
-      } finally {
         setLoading(false);
       }
     };
@@ -42,91 +31,55 @@ export default function JobDetailsScreen() {
     fetchJob();
   }, [jobId]);
 
-  const handleAccept = async () => {
-    try {
-      const jobRef = doc(db, 'jobs', job.id);
-      await updateDoc(jobRef, {
-        status: 'accepted',
-        contractorId: user.uid,
-        contractorEmail: user.email
-      });
-      setJob(prev => ({
-        ...prev,
-        status: 'accepted',
-        contractorId: user.uid,
-        contractorEmail: user.email
-      }));
-    } catch (error) {
-      console.error('Error accepting job:', error);
-    }
-  };
+  if (loading) {
+    return <ActivityIndicator size="large" color="#008080" style={styles.loader} />;
+  }
 
-  const handleDecline = () => {
-    navigation.goBack();
-  };
+  if (!job) {
+    return <Text style={styles.errorText}>Job not found</Text>;
+  }
 
-  const handleComplete = async () => {
-    try {
-      const jobRef = doc(db, 'jobs', job.id);
-      await updateDoc(jobRef, { status: 'completed' });
-      setJob(prev => ({ ...prev, status: 'completed' }));
-    } catch (error) {
-      console.error('Error completing job:', error);
-    }
-  };
-
-  if (loading) return <ActivityIndicator style={{ marginTop: 50 }} />;
-
-  const showAcceptDecline = job.status !== 'accepted';
-  const isAssignedToUser = job.contractorId === user?.uid;
-  const isClient = job.clientId === user?.uid;
+  const isClient = userId === job.clientId;
+  const isAssignedContractor = userId === job.contractorId;
+  const showFullDetails = isClient || isAssignedContractor;
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{job.title}</Text>
+      <Text style={styles.urgency}>Urgency: {job.urgency || 'Normal'}</Text>
+      {job.scheduledTime && (
+        <Text style={styles.scheduled}>Scheduled: {job.scheduledTime}</Text>
+      )}
       <Text style={styles.description}>{job.description}</Text>
 
-      {job.photos?.map((uri, idx) => (
-        <Image key={idx} source={{ uri }} style={styles.image} />
-      ))}
+      {job.photos?.length > 0 &&
+        job.photos.map((url, index) => (
+          <Image
+            key={index}
+            source={{ uri: url }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        ))}
 
-      <View style={styles.detailsBox}>
-        <Text style={styles.label}>Location:</Text>
-        <Text style={styles.value}>{job.location || 'N/A'}</Text>
+      {showFullDetails && (
+        <>
+          <Text style={styles.details}>Address: {job.address || 'N/A'}</Text>
+          <Text style={styles.details}>Gate Code: {job.gateCode || 'N/A'}</Text>
+          <Text style={styles.details}>Special Instructions: {job.instructions || 'None'}</Text>
+          <Text style={styles.details}>Client Contact: {job.clientName} ({job.clientPhone})</Text>
+        </>
+      )}
 
-        <Text style={styles.label}>Scheduled Date/Time:</Text>
-        <Text style={styles.value}>
-          {job.date || 'Unscheduled'} {job.timeWindow ? `from ${job.timeWindow}` : ''}
-        </Text>
-
-        <Text style={styles.label}>Contact Info:</Text>
-        <Text style={styles.value}>{job.contact || 'N/A'}</Text>
-
-        <Text style={styles.label}>Gate Code:</Text>
-        <Text style={styles.value}>{job.gateCode || 'N/A'}</Text>
-
-        <Text style={styles.label}>Special Instructions:</Text>
-        <Text style={styles.value}>{job.instructions || 'None'}</Text>
-      </View>
-
-      {user && !isClient && (
-        <View style={styles.buttonGroup}>
-          {showAcceptDecline && (
-            <>
-              <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
-                <Text style={styles.buttonText}>Accept Job</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
-                <Text style={styles.buttonText}>Decline</Text>
-              </TouchableOpacity>
-            </>
-          )}
-          {job.status === 'accepted' && isAssignedToUser && (
-            <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
-              <Text style={styles.buttonText}>Mark as Completed</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      {!isAssignedContractor && !isClient && (
+        <Button
+          title="Accept Job"
+          onPress={() => {
+            // handle acceptance logic
+            console.log('Accept button pressed');
+          }}
+          color="#008080"
+        />
       )}
     </ScrollView>
   );
@@ -134,68 +87,49 @@ export default function JobDetailsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: 'white',
-    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  loader: {
+    marginTop: 50,
   },
   title: {
     fontSize: 24,
-    fontFamily: 'MenderFont', // Make sure this font is loaded
-    color: 'black',
-    marginBottom: 12,
+    fontWeight: 'bold',
+    color: '#008080',
+    marginBottom: 10,
+    fontFamily: 'MenderFont',
+  },
+  urgency: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ff4500',
+    marginBottom: 5,
+  },
+  scheduled: {
+    fontSize: 16,
+    color: '#444',
+    marginBottom: 10,
   },
   description: {
     fontSize: 16,
     color: '#333',
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  details: {
+    fontSize: 16,
+    color: '#444',
+    marginBottom: 8,
   },
   image: {
     width: '100%',
     height: 200,
-    resizeMode: 'cover',
+    marginVertical: 10,
     borderRadius: 8,
-    marginBottom: 12,
   },
-  detailsBox: {
-    backgroundColor: '#e0f7f7',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  label: {
-    fontWeight: 'bold',
-    marginTop: 8,
-    color: '#008080',
-  },
-  value: {
-    color: '#000',
-    marginBottom: 6,
-  },
-  buttonGroup: {
-    marginTop: 16,
-    gap: 12,
-  },
-  acceptButton: {
-    backgroundColor: '#008080',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-  },
-  declineButton: {
-    backgroundColor: '#999',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-  },
-  completeButton: {
-    backgroundColor: '#006666',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  errorText: {
+    marginTop: 50,
+    textAlign: 'center',
+    color: 'red',
   },
 });
