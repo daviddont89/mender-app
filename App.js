@@ -6,7 +6,6 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-
 // Splash Onboarding Flow
 import Screen1 from './Screen1';
 import Screen2 from './Screen2';
@@ -38,6 +37,8 @@ import SettingsScreen from './SettingsScreen';
 import AdminScreen from './AdminScreen';
 import AdminUserListScreen from './AdminUserListScreen';
 
+// 👇 ADD THIS IMPORT:
+import MainAppNavigator from './MainAppNavigator';
 
 const Stack = createStackNavigator();
 
@@ -54,6 +55,9 @@ export default function App() {
         {/* Auth */}
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignUpScreen} />
+
+        {/* 🔧 ADD THIS LINE */}
+        <Stack.Screen name="MainApp" component={MainAppNavigator} />
 
         {/* Role Router */}
         <Stack.Screen name="Home" component={HomeRouterScreen} />

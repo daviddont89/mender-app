@@ -1,7 +1,6 @@
-// screens/HomeRouterScreen.js
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 
@@ -9,16 +8,16 @@ const HomeRouterScreen = () => {
   const navigation = useNavigation();
   const auth = getAuth();
   const db = getFirestore();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const routeToHome = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          navigation.replace('Login');
-          return;
-        }
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        navigation.replace('Login');
+        return;
+      }
 
+      try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         const role = userDoc.exists() ? userDoc.data().role : null;
 
@@ -34,10 +33,12 @@ const HomeRouterScreen = () => {
       } catch (error) {
         console.error('Role-based redirect failed:', error);
         navigation.replace('Login');
+      } finally {
+        setLoading(false);
       }
-    };
+    });
 
-    routeToHome();
+    return () => unsubscribe();
   }, []);
 
   return (

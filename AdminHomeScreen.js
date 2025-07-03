@@ -11,10 +11,7 @@ export default function AdminHomeScreen() {
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Login' }],
-        });
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
       })
       .catch(error => {
         console.error('Logout error:', error);
@@ -25,31 +22,27 @@ export default function AdminHomeScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Admin Dashboard</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('AdminUserList')}
-      >
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AdminUserList')}>
         <Text style={styles.buttonText}>Manage Users</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('OpenJobs')}
-      >
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('OpenJobs')}>
         <Text style={styles.buttonText}>View All Jobs</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('Account')}
-      >
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AdminLogsScreen')}>
+        <Text style={styles.buttonText}>System Logs</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AdminRatingScreen')}>
+        <Text style={styles.buttonText}>Ratings</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Account')}>
         <Text style={styles.buttonText}>Account Settings</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#ff4d4d' }]}
-        onPress={handleLogout}
-      >
+      <TouchableOpacity style={[styles.button, { backgroundColor: '#ff4d4d' }]} onPress={handleLogout}>
         <Text style={styles.buttonText}>Log Out</Text>
       </TouchableOpacity>
     </View>
