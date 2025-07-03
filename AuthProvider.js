@@ -1,7 +1,7 @@
 // AuthProvider.js
 import React, { createContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, db } from './firebase';
+import { auth, firestore } from './firebase'; // ✅ FIXED: replaced db with firestore
 import { doc, getDoc } from 'firebase/firestore';
 
 export const AuthContext = createContext();
@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         try {
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          const userDoc = await getDoc(doc(firestore, 'users', firebaseUser.uid)); // ✅ FIXED: use 'firestore'
           if (userDoc.exists()) {
             setUserRole(userDoc.data().role);
           } else {

@@ -17,6 +17,7 @@ const ClientHomeScreen = () => {
     const fetchJobs = async () => {
       try {
         const user = auth.currentUser;
+        if (!user || !user.uid) return;  // ✅ Guard Firestore call
         const q = query(
           collection(db, 'jobs'),
           where('clientId', '==', user.uid)

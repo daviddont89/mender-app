@@ -3,15 +3,18 @@ import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, ActivityIndi
 import { useNavigation } from '@react-navigation/native';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
+import { getAuth } from 'firebase/auth';
 
 export default function OpenJobsScreen() {
   const navigation = useNavigation();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const user = getAuth().currentUser;
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
+        if (!user || !user.uid) return;  // Guard Firestore call
         const snapshot = await getDocs(collection(db, 'jobs'));
         const jobList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setJobs(jobList);

@@ -1,38 +1,42 @@
+// HomeRouterScreen.js
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { useNavigation } from '@react-navigation/native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from './firebase';
+import ContractorHomeScreen from './ContractorHomeScreen';
+import ClientHomeScreen from './ClientHomeScreen';
+import AdminHomeScreen from './AdminHomeScreen';
+import LoginScreen from './LoginScreen';
 
 const HomeRouterScreen = () => {
-  const navigation = useNavigation();
-  const auth = getAuth();
-  const db = getFirestore();
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        navigation.replace('Login');
+        setUser(null);
+        setLoading(false);
         return;
       }
 
+      setUser(user);
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const role = userDoc.exists() ? userDoc.data().role : null;
+        const userDocRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userDocRef);
 
-        if (role === 'contractor') {
-          navigation.replace('ContractorHome');
-        } else if (role === 'client') {
-          navigation.replace('ClientHome');
-        } else if (role === 'admin') {
-          navigation.replace('AdminHome');
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setRole(userData.role);
         } else {
-          navigation.replace('Login');
+          console.error('User document not found');
+          setRole('client'); // fallback default
         }
-      } catch (error) {
-        console.error('Role-based redirect failed:', error);
-        navigation.replace('Login');
+      } catch (err) {
+        console.error('Error fetching user role:', err.message);
+        setRole(null);
       } finally {
         setLoading(false);
       }
@@ -41,11 +45,34 @@ const HomeRouterScreen = () => {
     return () => unsubscribe();
   }, []);
 
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" />
-    </View>
-  );
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#00bcd4" />
+      </View>
+    );
+  }
+
+  if (!user) return <LoginScreen />;
+
+  switch (role) {
+    case 'contractor':
+      return <ContractorHomeScreen />;
+    case 'admin':
+      return <AdminHomeScreen />;
+    case 'client':
+    default:
+      return <ClientHomeScreen />;
+  }
 };
+
+const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+});
 
 export default HomeRouterScreen;
