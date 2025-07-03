@@ -2,19 +2,25 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
+// ✅ Firebase configuration object (hardcoded inline, NOT imported)
 const firebaseConfig = {
-  apiKey: "AIzaSyAG_sO6vnMnkaccHstDYPspFsLzVq29THg",
-  authDomain: "menderapp-8ddf3.firebaseapp.com",
-  projectId: "menderapp-8ddf3",
-  storageBucket: "menderapp-8ddf3.firebasestorage.app",
-  messagingSenderId: "547432694662",
-  appId: "1:547432694662:web:367a8fd30aa00467f02207",
-  measurementId: "G-8VKTE7DCVW"
+  apiKey: "AIzaSyBml...",
+  authDomain: "mender-app.firebaseapp.com",
+  projectId: "mender-app",
+  storageBucket: "mender-app.appspot.com",
+  messagingSenderId: "531863643493",
+  appId: "1:531863643493:web:fc3a641e114bdfd44a5f3b",
+  measurementId: "G-QVNLJZBBNF"
 };
 
+// ✅ Make sure initializeApp gets the config
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
 
-export { auth, db };
+// ✅ Initialize and export Firebase services
+const auth = getAuth(app);
+const firestore = getFirestore(app);
+const storage = getStorage(app);
+
+export { auth, firestore, storage };

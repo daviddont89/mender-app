@@ -1,66 +1,77 @@
 // AdminUserListScreen.js
-
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
-import { getApp } from 'firebase/app';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { db } from './firebase';
 
-const AdminUserListScreen = () => {
+export default function AdminUserListScreen() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const db = getFirestore(getApp());
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const querySnapshot = await getDocs(collection(db, 'users'));
+      const usersData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setUsers(usersData);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+    setLoading(false);
+  };
+
+  const updateRole = async (userId, newRole) => {
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        role: newRole,
+      });
+      fetchUsers(); // Refresh list
+    } catch (error) {
+      console.error('Error updating role:', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'users'));
-        const userList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setUsers(userList);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
 
-  const renderItem = ({ item }) => (
+  const renderUserItem = ({ item }) => (
     <View style={styles.userCard}>
-      <Text style={styles.name}>{item.name || 'Unnamed User'}</Text>
       <Text style={styles.email}>{item.email}</Text>
-      <Text style={styles.role}>Role: {item.role || 'unknown'}</Text>
+      <Text style={styles.role}>Current Role: {item.role || 'none'}</Text>
+
+      <View style={styles.buttonRow}>
+        {['client', 'contractor', 'admin'].map(role => (
+          <TouchableOpacity
+            key={role}
+            style={[styles.roleButton, item.role === role && styles.selected]}
+            onPress={() => updateRole(item.id, role)}
+          >
+            <Text style={styles.buttonText}>{role}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#00aaa9" />
-        <Text>Loading users...</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>All Registered Users</Text>
-      <FlatList
-        data={users}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
+      <Text style={styles.header}>Manage User Roles</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#00bfa5" />
+      ) : (
+        <FlatList
+          data={users}
+          keyExtractor={(item) => item.id}
+          renderItem={renderUserItem}
+        />
+      )}
     </View>
   );
-};
-
-export default AdminUserListScreen;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -75,25 +86,36 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   userCard: {
-    borderBottomWidth: 1,
+    borderWidth: 1,
     borderColor: '#ccc',
-    paddingVertical: 10,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: '600',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
   },
   email: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   role: {
-    fontSize: 14,
-    color: '#333',
+    marginBottom: 10,
+    color: '#555',
   },
-  centered: {
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  roleButton: {
+    backgroundColor: '#eee',
+    padding: 8,
+    borderRadius: 5,
+    marginRight: 5,
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+  },
+  selected: {
+    backgroundColor: '#00bfa5',
+  },
+  buttonText: {
+    color: '#000',
   },
 });

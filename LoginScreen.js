@@ -13,7 +13,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigation.replace('Home');
+      navigation.replace('HomeRouter'); // <-- CHANGED from 'Home' to 'HomeRouter'
     } catch (error) {
       Alert.alert('Login Failed', error.message);
     }
