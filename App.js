@@ -5,7 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import firebaseConfig from './firebase';
+
 
 // Splash Onboarding Flow
 import Screen1 from './Screen1';
@@ -38,10 +38,6 @@ import SettingsScreen from './SettingsScreen';
 import AdminScreen from './AdminScreen';
 import AdminUserListScreen from './AdminUserListScreen';
 
-// Initialize Firebase
-initializeApp(firebaseConfig);
-getAuth();
-getFirestore();
 
 const Stack = createStackNavigator();
 
