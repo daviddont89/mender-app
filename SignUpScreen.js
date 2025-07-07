@@ -1,64 +1,69 @@
+// 🔒 LOCKED FILE — DO NOT EDIT, FIX, OR REPLACE
 // SignUpScreen.js
+
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from './firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from './firebase';
 
 export default function SignUpScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const role = route.params?.role || 'client';
 
   const handleSignUp = async () => {
-    if (password !== confirmPassword) {
-      Alert.alert("Passwords don't match", 'Please make sure your passwords match.');
-      return;
-    }
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      navigation.replace('Home');
-    } catch (error) {
-      Alert.alert('Signup Failed', error.message);
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCred.user;
+
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email,
+        role,
+        createdAt: new Date().toISOString(),
+      });
+
+      navigation.navigate('HomeRouter');
+    } catch (err) {
+      setError('Failed to create account. Try again.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('./Icons/mender-banner.png')}
-        style={styles.banner}
-        resizeMode="contain"
-      />
-      <Text style={styles.header}>Create Your Mender Account</Text>
+      <Image source={require('./Icons/mender-banner.png')} style={styles.logo} resizeMode="contain" />
+      <Text style={styles.title}>Sign Up</Text>
+
       <TextInput
         style={styles.input}
         placeholder="Email"
         autoCapitalize="none"
-        keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        keyboardType="email-address"
       />
       <TextInput
         style={styles.input}
         placeholder="Password"
+        autoCapitalize="none"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
+
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
       <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-        <Text style={styles.buttonText}>Sign Up</Text>
+        <Text style={styles.buttonText}>Create Account</Text>
       </TouchableOpacity>
+
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.link}>Already have an account? Log in</Text>
+        <Text style={styles.link}>Already have an account? Log In</Text>
       </TouchableOpacity>
     </View>
   );
@@ -66,52 +71,51 @@ export default function SignUpScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    padding: 30,
     backgroundColor: '#fff',
-    padding: 24,
+    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  banner: {
-    width: '100%',
-    maxWidth: 320,
+  logo: {
+    width: '80%',
     height: 100,
-    marginBottom: 24,
-  },
-  header: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#008080',
+    alignSelf: 'center',
     marginBottom: 20,
-    fontFamily: 'MenderFont',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#008080',
+    marginBottom: 24,
     textAlign: 'center',
   },
   input: {
-    width: '100%',
-    borderWidth: 1,
     borderColor: '#ccc',
-    padding: 12,
-    marginBottom: 12,
+    borderWidth: 1,
+    padding: 14,
     borderRadius: 8,
-    backgroundColor: '#f9f9f9',
+    marginBottom: 12,
   },
   button: {
     backgroundColor: '#008080',
-    paddingVertical: 12,
-    paddingHorizontal: 32,
+    padding: 14,
     borderRadius: 8,
-    marginTop: 8,
-    marginBottom: 16,
-    width: '100%',
-    alignItems: 'center',
+    marginTop: 10,
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    textAlign: 'center',
     fontSize: 16,
   },
   link: {
     color: '#008080',
-    fontSize: 14,
+    marginTop: 18,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+  },
+  error: {
+    color: 'red',
+    marginBottom: 10,
+    textAlign: 'center',
   },
 });

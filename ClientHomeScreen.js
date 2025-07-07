@@ -1,132 +1,101 @@
+// 🔒 LOCKED FILE — DO NOT EDIT, FIX, OR REPLACE
 // ClientHomeScreen.js
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
-const ClientHomeScreen = () => {
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { auth, db } from './firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import JobCard from './components/JobCard';
+
+export default function ClientHomeScreen() {
   const navigation = useNavigation();
-  const [jobs, setJobs] = useState([]);
+  const [postedJobs, setPostedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const auth = getAuth();
-  const db = getFirestore();
+  const fetchJobs = async () => {
+    try {
+      const q = query(collection(db, 'jobs'), where('clientId', '==', auth.currentUser.uid));
+      const snapshot = await getDocs(q);
+      const jobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPostedJobs(jobs);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error loading jobs:', err);
+    }
+  };
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user || !user.uid) return;  // ✅ Guard Firestore call
-        const q = query(
-          collection(db, 'jobs'),
-          where('clientId', '==', user.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        const jobList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setJobs(jobList);
-      } catch (error) {
-        console.error('Error fetching jobs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchJobs();
   }, []);
 
-  const renderJobItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.jobCard}
-      onPress={() => navigation.navigate('JobDetails', { jobId: item.id })}
-    >
-      <Text style={styles.jobTitle}>{item.title}</Text>
-      <Text>Status: {item.status}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>My Jobs</Text>
+      <Text style={styles.header}>Welcome to Mender</Text>
 
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('PostJob')}>
+        <Text style={styles.buttonText}>Post a New Job</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.sectionHeader}>Your Jobs</Text>
       {loading ? (
-        <ActivityIndicator size="large" color="#007b80" />
+        <ActivityIndicator size="large" color="#008080" />
+      ) : postedJobs.length > 0 ? (
+        postedJobs.map(job => <JobCard key={job.id} job={job} />)
       ) : (
-        <FlatList
-          data={jobs}
-          renderItem={renderJobItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.list}
-        />
+        <Text style={styles.emptyText}>You haven’t posted any jobs yet.</Text>
       )}
 
-      <View style={styles.buttonBar}>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('PostJob')}>
-          <Text style={styles.buttonText}>Post Job</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('BrowseContractors')}>
-          <Text style={styles.buttonText}>Find Contractor</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('Account')}>
-          <Text style={styles.buttonText}>Account</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('Contact')}>
-          <Text style={styles.buttonText}>Help</Text>
-        </TouchableOpacity>
-      </View>
+      <Text style={styles.sectionHeader}>Recently Completed in Your Area</Text>
+      {/* Static data for now — to be dynamic in v2 */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={styles.completedJobCard}><Text>Painted Deck - 98366</Text></View>
+        <View style={styles.completedJobCard}><Text>Roof Repair - 98367</Text></View>
+        <View style={styles.completedJobCard}><Text>Fence Install - 98310</Text></View>
+      </ScrollView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
     padding: 20,
+    backgroundColor: '#fff',
+    flex: 1,
   },
-  heading: {
-    fontSize: 24,
+  header: {
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#007b80',
+    color: '#008080',
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  list: {
-    paddingBottom: 100,
-  },
-  jobCard: {
-    backgroundColor: '#f0f0f0',
-    padding: 16,
-    marginBottom: 10,
-    borderRadius: 12,
-  },
-  jobTitle: {
+  sectionHeader: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 4,
+    marginTop: 24,
+    marginBottom: 10,
+    color: '#333',
   },
-  buttonBar: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  navButton: {
-    backgroundColor: '#007b80',
-    padding: 12,
-    borderRadius: 10,
-    flex: 1,
-    marginHorizontal: 5,
+  button: {
+    backgroundColor: '#008080',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 10,
   },
   buttonText: {
-    color: '#ffffff',
-    textAlign: 'center',
-    fontWeight: '600',
+    color: '#fff',
+    fontSize: 16,
+  },
+  completedJobCard: {
+    backgroundColor: '#eee',
+    padding: 16,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  emptyText: {
+    fontStyle: 'italic',
+    color: '#888',
   },
 });
-
-export default ClientHomeScreen;

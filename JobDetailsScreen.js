@@ -1,178 +1,79 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+// JobDetailsScreen.js
+
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Button, Alert, Image, ScrollView } from 'react-native';
 import { auth, db } from './firebase';
-import moment from 'moment';
+import { doc, updateDoc } from 'firebase/firestore';
 
-export default function JobDetailsScreen() {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const { jobId } = route.params;
+export default function JobDetailsScreen({ route, navigation }) {
+  const { job } = route.params;
+  const isOwner = job.clientId === auth.currentUser.uid;
+  const isContractor = !isOwner;
 
-  const [job, setJob] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [role, setRole] = useState(null);
-
-  useEffect(() => {
-    const fetchJob = async () => {
-      const jobRef = doc(db, 'jobs', jobId);
-      const jobSnap = await getDoc(jobRef);
-      if (jobSnap.exists()) {
-        setJob({ id: jobSnap.id, ...jobSnap.data() });
-      }
-    };
-
-    const fetchUser = async () => {
-      const userRef = doc(db, 'users', auth.currentUser.uid);
-      const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) {
-        setCurrentUser(userSnap.data());
-        setRole(userSnap.data().role);
-      }
-    };
-
-    fetchJob();
-    fetchUser();
-  }, [jobId]);
-
-  const updateJobStatus = async (statusUpdate) => {
-    const jobRef = doc(db, 'jobs', jobId);
-    await updateDoc(jobRef, { status: statusUpdate });
-
-    const updatedJob = { ...job, status: statusUpdate };
-    setJob(updatedJob);
-  };
-
-  const handleIncomplete = () => {
-    Alert.prompt(
-      'Reason for Incompletion',
-      'Please explain why the job was not completed:',
-      async (reason) => {
-        if (reason) {
-          const jobRef = doc(db, 'jobs', jobId);
-          await updateDoc(jobRef, {
-            status: 'Incomplete',
-            incompleteReason: reason,
-          });
-          setJob({ ...job, status: 'Incomplete', incompleteReason: reason });
-        }
-      }
-    );
-  };
-
-  const renderJobMedia = () => {
-    return (
-      <View style={styles.mediaContainer}>
-        {job?.images?.map((uri, index) => (
-          <Image key={index} source={{ uri }} style={styles.image} />
-        ))}
-        {/* Add logic for videos/files in later version if needed */}
-      </View>
-    );
-  };
-
-  const renderContactInfo = () => {
-    if (
-      role === 'admin' ||
-      (role === 'contractor' && job.contractorId === auth.currentUser.uid)
-    ) {
-      return (
-        <View style={styles.section}>
-          <Text style={styles.label}>Client Name:</Text>
-          <Text>{job.clientName}</Text>
-          <Text style={styles.label}>Phone:</Text>
-          <Text>{job.phone}</Text>
-          <Text style={styles.label}>Full Address:</Text>
-          <Text>{job.address}</Text>
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.section}>
-          <Text style={styles.label}>Location:</Text>
-          <Text>{job.city}, {job.zip}</Text>
-        </View>
-      );
+  const handleAccept = async () => {
+    try {
+      await updateDoc(doc(db, 'jobs', job.id), {
+        contractorId: auth.currentUser.uid,
+        status: 'Accepted',
+      });
+      Alert.alert('Job Accepted');
+      navigation.goBack();
+    } catch (e) {
+      console.error('Accept Error:', e);
+      Alert.alert('Error', 'Could not accept job');
     }
   };
 
-  const renderButtons = () => {
-    if (!job || !role) return null;
-
-    const isOwnJob = job.contractorId === auth.currentUser.uid;
-
-    if (role === 'contractor') {
-      if (!job.contractorId) {
-        return <Button title="Accept Job" onPress={() => updateDoc(doc(db, 'jobs', jobId), { contractorId: auth.currentUser.uid, status: 'Accepted' }).then(() => setJob({ ...job, contractorId: auth.currentUser.uid, status: 'Accepted' }))} />;
-      } else if (isOwnJob && job.status === 'Accepted') {
-        return <Button title="Start Job" onPress={() => updateJobStatus('In Progress')} />;
-      } else if (isOwnJob && job.status === 'In Progress') {
-        return (
-          <>
-            <Button title="Complete Job" onPress={() => updateJobStatus('Completed')} />
-            <Button title="Mark Incomplete" color="red" onPress={handleIncomplete} />
-          </>
-        );
-      }
+  const handleStart = async () => {
+    try {
+      await updateDoc(doc(db, 'jobs', job.id), { status: 'In Progress' });
+      Alert.alert('Job Started');
+      navigation.goBack();
+    } catch (e) {
+      console.error('Start Error:', e);
     }
-
-    if (role === 'client') {
-      return (
-        <>
-          <Button title="Edit Job" onPress={() => navigation.navigate('PostJobScreen', { jobId })} />
-          <Button title="Cancel Job" color="red" onPress={() => updateJobStatus('Cancelled')} />
-        </>
-      );
-    }
-
-    if (role === 'admin') {
-      return (
-        <>
-          <Button title="Accept" onPress={() => updateJobStatus('Accepted')} />
-          <Button title="Start" onPress={() => updateJobStatus('In Progress')} />
-          <Button title="Complete" onPress={() => updateJobStatus('Completed')} />
-          <Button title="Cancel" onPress={() => updateJobStatus('Cancelled')} />
-          <Button title="Mark Incomplete" color="red" onPress={handleIncomplete} />
-        </>
-      );
-    }
-
-    return null;
   };
 
-  if (!job) {
-    return (
-      <View style={styles.container}>
-        <Text>Loading job details...</Text>
-      </View>
-    );
-  }
+  const handleComplete = async () => {
+    try {
+      await updateDoc(doc(db, 'jobs', job.id), { status: 'Completed' });
+      Alert.alert('Job Completed');
+      navigation.goBack();
+    } catch (e) {
+      console.error('Complete Error:', e);
+    }
+  };
+
+  const handleIncomplete = async () => {
+    try {
+      await updateDoc(doc(db, 'jobs', job.id), { status: 'Incomplete' });
+      Alert.alert('Marked Incomplete');
+      navigation.goBack();
+    } catch (e) {
+      console.error('Incomplete Error:', e);
+    }
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>{job.title}</Text>
-      <Text style={styles.status}>Status: {job.status}</Text>
+      <Text style={styles.desc}>{job.description}</Text>
+      <Text style={styles.zip}>ZIP Code: {job.zip}</Text>
+      {job.imageURL && <Image source={{ uri: job.imageURL }} style={styles.image} />}
 
-      <View style={styles.section}>
-        <Text style={styles.label}>Description:</Text>
-        <Text>{job.description}</Text>
-      </View>
-
-      {renderContactInfo()}
-
-      {job.specialInstructions && (
-        <View style={styles.section}>
-          <Text style={styles.label}>Special Instructions:</Text>
-          <Text>{job.specialInstructions}</Text>
-        </View>
+      {isContractor && job.status === 'Open' && (
+        <Button title="Accept Job" onPress={handleAccept} color="#008080" />
       )}
-
-      {renderJobMedia()}
-
-      <View style={styles.buttonContainer}>
-        {renderButtons()}
-      </View>
+      {isContractor && job.status === 'Accepted' && (
+        <Button title="Start Job" onPress={handleStart} color="#008080" />
+      )}
+      {isContractor && job.status === 'In Progress' && (
+        <>
+          <Button title="Complete Job" onPress={handleComplete} color="#006400" />
+          <View style={{ height: 10 }} />
+          <Button title="Mark Incomplete" onPress={handleIncomplete} color="#8B0000" />
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -180,32 +81,27 @@ export default function JobDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
+    color: '#008080',
+    marginBottom: 10,
   },
-  status: {
+  desc: {
     fontSize: 16,
-    marginVertical: 10,
-    fontStyle: 'italic',
+    marginBottom: 10,
   },
-  section: {
-    marginVertical: 10,
-  },
-  label: {
-    fontWeight: '600',
+  zip: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 10,
   },
   image: {
     height: 200,
-    marginVertical: 10,
-    borderRadius: 10,
-  },
-  mediaContainer: {
-    flexDirection: 'column',
-  },
-  buttonContainer: {
-    marginVertical: 20,
+    width: '100%',
+    borderRadius: 12,
+    marginBottom: 20,
   },
 });

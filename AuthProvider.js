@@ -1,7 +1,9 @@
+// 🔒 LOCKED FILE — DO NOT EDIT, FIX, OR REPLACE
 // AuthProvider.js
+
 import React, { createContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, firestore } from './firebase'; // ✅ FIXED: replaced db with firestore
+import { auth, db } from './firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export const AuthContext = createContext();
@@ -16,14 +18,16 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         try {
-          const userDoc = await getDoc(doc(firestore, 'users', firebaseUser.uid)); // ✅ FIXED: use 'firestore'
-          if (userDoc.exists()) {
-            setUserRole(userDoc.data().role);
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            setUserRole(userDocSnap.data().role || null);
           } else {
             setUserRole(null);
           }
         } catch (error) {
-          console.error('Failed to fetch user role:', error);
+          console.error('❌ Error fetching user role:', error);
           setUserRole(null);
         }
       } else {

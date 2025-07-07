@@ -1,7 +1,10 @@
+// 🔒 LOCKED FILE — DO NOT EDIT, FIX, OR REPLACE
 // firebase.js
+
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAG_sO6vnMnkaccHstDYPspFsLzVq29THg",
@@ -13,8 +16,15 @@ const firebaseConfig = {
   measurementId: "G-8VKTE7DCVW"
 };
 
-const app = initializeApp(firebaseConfig);
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (err) {
+  console.error("🔥 Firebase failed to initialize:", err);
+}
+
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-export { auth, db };
+export { auth, db, storage };

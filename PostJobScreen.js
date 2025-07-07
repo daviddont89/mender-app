@@ -1,72 +1,50 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Image, ScrollView, Alert, TouchableOpacity } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+// PostJobScreen.js
 
-export default function PostJobScreen() {
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView } from 'react-native';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { db, auth } from './firebase';
+
+export default function PostJobScreen({ navigation }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [media, setMedia] = useState([]);
+  const [zip, setZip] = useState('');
+  const [imageURL, setImageURL] = useState('');
 
-  const pickMedia = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsMultipleSelection: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const newUri = result.assets?.[0]?.uri || result.uri;
-      setMedia([...media, newUri]);
-    }
-  };
-
-  const handleSubmit = () => {
-    if (!title || !description) {
-      Alert.alert('Missing Fields', 'Please enter both title and description.');
+  const handleSubmit = async () => {
+    if (!title || !description || !zip) {
+      Alert.alert('Missing Info', 'Please fill out all fields.');
       return;
     }
 
-    // Submit logic (to be replaced with Firebase integration)
-    console.log('Job submitted:', { title, description, media });
-    Alert.alert('Success', 'Your job has been posted!');
-    setTitle('');
-    setDescription('');
-    setMedia([]);
+    try {
+      await addDoc(collection(db, 'jobs'), {
+        title,
+        description,
+        zip,
+        imageURL,
+        status: 'Open',
+        clientId: auth.currentUser.uid,
+        createdAt: Timestamp.now(),
+      });
+      Alert.alert('Success', 'Job posted!');
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error posting job:', error);
+      Alert.alert('Error', 'Could not post job.');
+    }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Post a Job</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.header}>Post a New Job</Text>
 
-      <Text style={styles.label}>Job Title</Text>
-      <TextInput
-        value={title}
-        onChangeText={setTitle}
-        placeholder="Enter job title"
-        style={styles.input}
-      />
+      <TextInput style={styles.input} placeholder="Job Title" value={title} onChangeText={setTitle} />
+      <TextInput style={styles.input} placeholder="Description" multiline value={description} onChangeText={setDescription} />
+      <TextInput style={styles.input} placeholder="ZIP Code" keyboardType="numeric" value={zip} onChangeText={setZip} />
+      <TextInput style={styles.input} placeholder="Image URL (optional)" value={imageURL} onChangeText={setImageURL} />
 
-      <Text style={styles.label}>Job Description</Text>
-      <TextInput
-        value={description}
-        onChangeText={setDescription}
-        placeholder="Enter job description"
-        multiline
-        numberOfLines={4}
-        style={[styles.input, styles.textArea]}
-      />
-
-      <TouchableOpacity style={styles.uploadButton} onPress={pickMedia}>
-        <Text style={styles.uploadText}>Upload Photos or Videos</Text>
-      </TouchableOpacity>
-
-      <View style={styles.mediaContainer}>
-        {media.map((uri, idx) => (
-          <Image key={idx} source={{ uri }} style={styles.mediaPreview} />
-        ))}
-      </View>
-
-      <Button title="Submit Job" onPress={handleSubmit} color="#00bcd4" />
+      <Button title="Post Job" onPress={handleSubmit} color="#008080" />
     </ScrollView>
   );
 }
@@ -75,54 +53,20 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     backgroundColor: '#fff',
+    flex: 1,
   },
   header: {
     fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 16,
-    color: '#222',
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginTop: 12,
-    marginBottom: 6,
-    color: '#333',
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#008080',
+    textAlign: 'center',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: '#ccc',
     padding: 12,
-    fontSize: 16,
-    backgroundColor: '#f9f9f9',
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  uploadButton: {
-    backgroundColor: '#00bcd4',
-    padding: 12,
+    marginBottom: 16,
     borderRadius: 8,
-    marginVertical: 16,
-    alignItems: 'center',
-  },
-  uploadText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  mediaContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 20,
-  },
-  mediaPreview: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    marginRight: 10,
-    marginBottom: 10,
   },
 });

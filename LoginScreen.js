@@ -1,64 +1,56 @@
+// 🔒 LOCKED FILE — DO NOT EDIT, FIX, OR REPLACE
+// LoginScreen.js
+
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from './firebase';
 
 export default function LoginScreen() {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    const auth = getAuth();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      console.log("✅ Login successful");
-
-      // 👇 Route to HomeRouterScreen to handle role-based navigation
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
-    } catch (error) {
-      console.error("❌ Login error:", error.message);
-      Alert.alert("Login Failed", error.message);
+    } catch (err) {
+      setError('Invalid email or password.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Image source={require('./Icons/mender-banner.png')} style={styles.banner} />
+      <Image source={require('./Icons/mender-banner.png')} style={styles.logo} resizeMode="contain" />
       <Text style={styles.title}>Log In</Text>
+
       <TextInput
         style={styles.input}
         placeholder="Email"
-        placeholderTextColor="#999"
-        onChangeText={setEmail}
-        value={email}
-        keyboardType="email-address"
         autoCapitalize="none"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
       />
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={styles.inputPassword}
-          placeholder="Password"
-          placeholderTextColor="#999"
-          onChangeText={setPassword}
-          value={password}
-          secureTextEntry={!showPassword}
-          autoCapitalize="none"
-        />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="gray" />
-        </TouchableOpacity>
-      </View>
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        autoCapitalize="none"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
+
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Log In</Text>
       </TouchableOpacity>
+
       <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-        <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+        <Text style={styles.link}>Don't have an account? Sign Up</Text>
       </TouchableOpacity>
     </View>
   );
@@ -66,65 +58,51 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    padding: 30,
     backgroundColor: '#fff',
-    paddingHorizontal: 30,
+    flex: 1,
     justifyContent: 'center',
   },
-  banner: {
-    width: '100%',
-    height: 60,
-    resizeMode: 'contain',
-    marginBottom: 40,
+  logo: {
+    width: '80%',
+    height: 100,
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#222',
-    marginBottom: 20,
-    alignSelf: 'center',
+    color: '#008080',
+    marginBottom: 24,
+    textAlign: 'center',
   },
   input: {
-    height: 50,
-    borderColor: '#ddd',
+    borderColor: '#ccc',
     borderWidth: 1,
+    padding: 14,
     borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
-    color: '#000',
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-  },
-  inputPassword: {
-    flex: 1,
-    height: 50,
-    fontSize: 16,
-    color: '#000',
+    marginBottom: 12,
   },
   button: {
-    backgroundColor: '#0cb9c1',
-    paddingVertical: 14,
+    backgroundColor: '#008080',
+    padding: 14,
     borderRadius: 8,
     marginTop: 10,
-    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
+    textAlign: 'center',
     fontSize: 16,
-    fontWeight: 'bold',
   },
-  linkText: {
-    color: '#0cb9c1',
-    marginTop: 15,
-    fontSize: 14,
+  link: {
+    color: '#008080',
+    marginTop: 18,
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+  },
+  error: {
+    color: 'red',
+    marginBottom: 10,
     textAlign: 'center',
   },
 });
