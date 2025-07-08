@@ -1,6 +1,5 @@
 // MenderOnboardingScreen.js
 import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -10,7 +9,7 @@ import firebaseApp from './firebase';
 import SplashScreen from './SplashScreen';
 import OnboardingScreen from './OnboardingScreen';
 import LoginScreen from './LoginScreen';
-import SignupScreen from './SignupScreen';
+import SignupScreen from './SignUpScreen';
 import ClientHomeScreen from './ClientHomeScreen';
 import ContractorHomeScreen from './ContractorHomeScreen';
 import AdminHomeScreen from './AdminHomeScreen';
@@ -20,7 +19,7 @@ import JobDetailsScreen from './JobDetailsScreen';
 import StartJobScreen from './StartJobScreen';
 import CompleteJobScreen from './CompleteJobScreen';
 import IncompleteJobScreen from './IncompleteJobScreen';
-import ClientJobsScreen from './ClientJobsScreen';
+import ClientJobsScreen from './ClientJobScreen';
 import ClientJobDetailsScreen from './ClientJobDetailsScreen';
 import ContractorAvailabilityScreen from './ContractorAvailabilityScreen';
 import ContractorEarningsScreen from './ContractorEarningsScreen';
@@ -126,35 +125,33 @@ export default function MenderOnboardingScreen() {
   }, []);
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
-        {/* Auth & Intro Screens */}
-        <Stack.Screen name="SplashScreen" component={SplashScreen} />
-        <Stack.Screen name="OnboardingScreen" component={OnboardingScreen} />
-        <Stack.Screen name="LoginScreen" component={LoginScreen} />
-        <Stack.Screen name="SignupScreen" component={SignupScreen} />
-        <Stack.Screen name="WelcomeBackScreen" component={WelcomeBackScreen} />
-        <Stack.Screen name="ApplyContractorScreen" component={ApplyContractorScreen} />
+    <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+      {/* Auth & Intro Screens */}
+      <Stack.Screen name="SplashScreen" component={SplashScreen} />
+      <Stack.Screen name="OnboardingScreen" component={OnboardingScreen} />
+      <Stack.Screen name="LoginScreen" component={LoginScreen} />
+      <Stack.Screen name="SignupScreen" component={SignupScreen} />
+      <Stack.Screen name="WelcomeBackScreen" component={WelcomeBackScreen} />
+      <Stack.Screen name="ApplyContractorScreen" component={ApplyContractorScreen} />
 
-        {/* Drawer Navigators for Role-Based Homes */}
-        <Stack.Screen name="ClientDrawer" component={ClientDrawer} />
-        <Stack.Screen name="ContractorDrawer" component={ContractorDrawer} />
-        <Stack.Screen name="AdminDrawer" component={AdminDrawer} />
+      {/* Drawer Navigators for Role-Based Homes */}
+      <Stack.Screen name="ClientDrawer" component={ClientDrawer} />
+      <Stack.Screen name="ContractorDrawer" component={ContractorDrawer} />
+      <Stack.Screen name="AdminDrawer" component={AdminDrawer} />
 
-        {/* Job Lifecycle Screens */}
-        <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} />
-        <Stack.Screen name="StartJobScreen" component={StartJobScreen} />
-        <Stack.Screen name="CompleteJobScreen" component={CompleteJobScreen} />
-        <Stack.Screen name="IncompleteJobScreen" component={IncompleteJobScreen} />
-        <Stack.Screen name="ClientJobDetailsScreen" component={ClientJobDetailsScreen} />
+      {/* Job Lifecycle Screens */}
+      <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} />
+      <Stack.Screen name="StartJobScreen" component={StartJobScreen} />
+      <Stack.Screen name="CompleteJobScreen" component={CompleteJobScreen} />
+      <Stack.Screen name="IncompleteJobScreen" component={IncompleteJobScreen} />
+      <Stack.Screen name="ClientJobDetailsScreen" component={ClientJobDetailsScreen} />
 
-        {/* Reviews & Payments */}
-        <Stack.Screen name="RateClientScreen" component={RateClientScreen} />
-        <Stack.Screen name="RateContractorScreen" component={RateContractorScreen} />
-        <Stack.Screen name="ReviewHistoryScreen" component={ReviewHistoryScreen} />
-        <Stack.Screen name="PaymentSetupScreen" component={PaymentSetupScreen} />
-        <Stack.Screen name="PaymentHistoryScreen" component={PaymentHistoryScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+      {/* Reviews & Payments */}
+      <Stack.Screen name="RateClientScreen" component={RateClientScreen} />
+      <Stack.Screen name="RateContractorScreen" component={RateContractorScreen} />
+      <Stack.Screen name="ReviewHistoryScreen" component={ReviewHistoryScreen} />
+      <Stack.Screen name="PaymentSetupScreen" component={PaymentSetupScreen} />
+      <Stack.Screen name="PaymentHistoryScreen" component={PaymentHistoryScreen} />
+    </Stack.Navigator>
   );
 }

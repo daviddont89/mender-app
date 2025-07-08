@@ -6,6 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider, AuthContext } from './AuthProvider';
 import AppNavigator from './AppNavigator';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import MenderOnboardingScreen from './MenderOnboardingScreen';
 
 function RootNavigator() {
   const { loading } = useContext(AuthContext);
@@ -23,9 +24,9 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
+ <AuthProvider>
       <NavigationContainer>
-        <RootNavigator />
+        <MenderOnboardingScreen />
       </NavigationContainer>
     </AuthProvider>
   );
