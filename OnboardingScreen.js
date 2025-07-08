@@ -14,21 +14,21 @@ export default function OnboardingScreen({ navigation }) {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('Signup')}
+        onPress={() => navigation.navigate('SignupScreen')}
       >
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.buttonOutline}
-        onPress={() => navigation.navigate('Login')}
+        onPress={() => navigation.navigate('LoginScreen')}
       >
         <Text style={styles.buttonOutlineText}>Log In</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.link}
-        onPress={() => navigation.navigate('ContractorOnboarding')}
+        onPress={() => navigation.navigate('ContractorOnboardingScreen')}
       >
         <Text style={styles.linkText}>Apply as a Contractor</Text>
       </TouchableOpacity>
