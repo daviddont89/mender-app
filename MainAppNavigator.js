@@ -1,70 +1,58 @@
-import React, { useContext, useEffect, useState } from 'react';
+// MainAppNavigator.js
+
+import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { AuthContext } from './AuthProvider';
-import HomeScreen from './HomeScreen';
-import PostJobScreen from './PostJobScreen';
-import OpenJobsScreen from './OpenJobsScreen';
-import JobDetailsScreen from './JobDetailsScreen';
 import ContractorHomeScreen from './ContractorHomeScreen';
 import ClientHomeScreen from './ClientHomeScreen';
-import AdminScreen from './AdminScreen';
-import AdminDashboardScreen from './AdminDashboardScreen';
-import AdminUsersScreen from './AdminUsersScreen';
-import AdminContractorsScreen from './AdminContractorsScreen';
-import AdminJobsScreen from './AdminJobsScreen';
-import AdminLogsScreen from './AdminLogsScreen';
-import AdminRatingsScreen from './AdminRatingScreen';
-import AdminSettingsScreen from './AdminSettingsScreen';
-import { fetchUserRole } from './firebase';
+import AdminHomeScreen from './AdminHomeScreen';
+import JobDetailsScreen from './JobDetailsScreen';
+import PostJobScreen from './PostJobScreen';
+import OpenJobsScreen from './OpenJobsScreen';
+import ApplyContractorScreen from './ApplyContractorScreen';
+import ReviewClientScreen from './ReviewClientScreen';
+import ReviewContractorScreen from './ReviewContractorScreen';
+import MyJobsScreen from './MyJobsScreen';
+import MetricsScreen from './MetricsScreen';
+import PaymentOptionsScreen from './PaymentOptionsScreen';
+import PaymentHistoryScreen from './PaymentHistoryScreen';
+import SettingsScreen from './SettingsScreen';
+import ContactUsScreen from './ContactUsScreen';
+import RoleRedirectScreen from './RoleRedirectScreen';
+import useUserRole from './useUserRole';
 
 const Stack = createNativeStackNavigator();
 
 export default function MainAppNavigator() {
-  const { user } = useContext(AuthContext);
-  const [userRole, setUserRole] = useState(null);
+  const role = useUserRole();
 
-  useEffect(() => {
-    const getRole = async () => {
-      const role = await fetchUserRole(user.uid);
-      setUserRole(role);
-    };
-    if (user) {
-      getRole();
-    }
-  }, [user]);
+  // Choose base screen by role
+  const getInitialScreen = () => {
+    if (role === 'client') return ClientHomeScreen;
+    if (role === 'contractor') return ContractorHomeScreen;
+    if (role === 'admin') return AdminHomeScreen;
+    return RoleRedirectScreen; // default fallback while role is loading
+  };
 
-  if (!userRole) {
-    return null; // Optionally render a loading spinner
-  }
+  const InitialScreen = getInitialScreen();
 
   return (
-    <Stack.Navigator>
-      {userRole === 'contractor' && (
-        <>
-          <Stack.Screen name="ContractorHome" component={ContractorHomeScreen} />
-          <Stack.Screen name="OpenJobs" component={OpenJobsScreen} />
-          <Stack.Screen name="JobDetails" component={JobDetailsScreen} />
-        </>
-      )}
-      {userRole === 'client' && (
-        <>
-          <Stack.Screen name="ClientHome" component={ClientHomeScreen} />
-          <Stack.Screen name="PostJob" component={PostJobScreen} />
-          <Stack.Screen name="JobDetails" component={JobDetailsScreen} />
-        </>
-      )}
-      {userRole === 'admin' && (
-        <>
-          <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
-          <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
-          <Stack.Screen name="AdminContractors" component={AdminContractorsScreen} />
-          <Stack.Screen name="AdminJobs" component={AdminJobsScreen} />
-          <Stack.Screen name="AdminLogs" component={AdminLogsScreen} />
-          <Stack.Screen name="AdminRatings" component={AdminRatingsScreen} />
-          <Stack.Screen name="AdminSettings" component={AdminSettingsScreen} />
-          <Stack.Screen name="AdminRoleManager" component={AdminScreen} />
-        </>
-      )}
+    <Stack.Navigator initialRouteName="InitialScreen">
+      <Stack.Screen name="InitialScreen" component={InitialScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ClientHomeScreen" component={ClientHomeScreen} options={{ title: 'Client Home' }} />
+      <Stack.Screen name="ContractorHomeScreen" component={ContractorHomeScreen} options={{ title: 'Contractor Home' }} />
+      <Stack.Screen name="AdminHomeScreen" component={AdminHomeScreen} options={{ title: 'Admin Home' }} />
+      <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} options={{ title: 'Job Details' }} />
+      <Stack.Screen name="PostJobScreen" component={PostJobScreen} options={{ title: 'Post a Job' }} />
+      <Stack.Screen name="OpenJobsScreen" component={OpenJobsScreen} options={{ title: 'Available Jobs' }} />
+      <Stack.Screen name="ApplyContractorScreen" component={ApplyContractorScreen} options={{ title: 'Apply as Contractor' }} />
+      <Stack.Screen name="ReviewClientScreen" component={ReviewClientScreen} options={{ title: 'Review Client' }} />
+      <Stack.Screen name="ReviewContractorScreen" component={ReviewContractorScreen} options={{ title: 'Review Contractor' }} />
+      <Stack.Screen name="MyJobsScreen" component={MyJobsScreen} options={{ title: 'My Jobs' }} />
+      <Stack.Screen name="MetricsScreen" component={MetricsScreen} options={{ title: 'Metrics' }} />
+      <Stack.Screen name="PaymentOptionsScreen" component={PaymentOptionsScreen} options={{ title: 'Payment Options' }} />
+      <Stack.Screen name="PaymentHistoryScreen" component={PaymentHistoryScreen} options={{ title: 'Payment History' }} />
+      <Stack.Screen name="SettingsScreen" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <Stack.Screen name="ContactUsScreen" component={ContactUsScreen} options={{ title: 'Contact Us' }} />
     </Stack.Navigator>
   );
 }
