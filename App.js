@@ -1,17 +1,16 @@
-// 🔒 LOCKED FILE — DO NOT EDIT, FIX, OR REPLACE
 // App.js
 
 import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider, AuthContext } from './AuthProvider';
 import AppNavigator from './AppNavigator';
+import AuthNavigator from './AuthNavigator';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
-import MenderOnboardingScreen from './MenderOnboardingScreen';
 
 function RootNavigator() {
-  const { loading } = useContext(AuthContext);
+  const { user, authLoading } = useContext(AuthContext);
 
-  if (loading) {
+  if (authLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#008080" />
@@ -19,14 +18,14 @@ function RootNavigator() {
     );
   }
 
-  return <AppNavigator />;
+  return user ? <AppNavigator /> : <AuthNavigator />;
 }
 
 export default function App() {
   return (
- <AuthProvider>
+    <AuthProvider>
       <NavigationContainer>
-        <MenderOnboardingScreen />
+        <RootNavigator />
       </NavigationContainer>
     </AuthProvider>
   );

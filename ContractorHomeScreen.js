@@ -1,7 +1,12 @@
-// ContractorHomeScreen.js
-
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import { auth, db } from './firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import JobCard from './components/JobCard';
@@ -13,16 +18,30 @@ export default function ContractorHomeScreen() {
   const [acceptedJobs, setAcceptedJobs] = useState([]);
   const [completedJobs, setCompletedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [timeoutReached, setTimeoutReached] = useState(false);
   const [selectedTab, setSelectedTab] = useState('Open');
 
+  useEffect(() => {
+    loadJobs();
+    const timer = setTimeout(() => setTimeoutReached(true), 10000); // 10 seconds
+    return () => clearTimeout(timer);
+  }, []);
+
   const loadJobs = async () => {
-    setLoading(true);
     try {
       const jobsRef = collection(db, 'jobs');
 
       const openQuery = query(jobsRef, where('status', '==', 'Open'));
-      const acceptedQuery = query(jobsRef, where('contractorId', '==', auth.currentUser.uid), where('status', 'in', ['Accepted', 'In Progress']));
-      const completedQuery = query(jobsRef, where('contractorId', '==', auth.currentUser.uid), where('status', '==', 'Completed'));
+      const acceptedQuery = query(
+        jobsRef,
+        where('contractorId', '==', auth.currentUser.uid),
+        where('status', 'in', ['Accepted', 'In Progress'])
+      );
+      const completedQuery = query(
+        jobsRef,
+        where('contractorId', '==', auth.currentUser.uid),
+        where('status', '==', 'Completed')
+      );
 
       const [openSnap, acceptedSnap, completedSnap] = await Promise.all([
         getDocs(openQuery),
@@ -30,63 +49,45 @@ export default function ContractorHomeScreen() {
         getDocs(completedQuery),
       ]);
 
-      setOpenJobs(openSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setAcceptedJobs(acceptedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setCompletedJobs(completedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    } catch (e) {
-      console.error('Failed to load jobs:', e);
+      setOpenJobs(openSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      setAcceptedJobs(acceptedSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      setCompletedJobs(completedSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    } catch (error) {
+      console.error('Failed to load jobs:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  useEffect(() => {
-    loadJobs();
-  }, []);
-
-  const renderJobs = (jobs) => {
-    if (!jobs.length) return <Text style={styles.empty}>No jobs to display.</Text>;
-
-    return jobs.map(job => (
-      <TouchableOpacity key={job.id} onPress={() => navigation.navigate('JobDetailsScreen', { job })}>
-        <JobCard job={job} />
-      </TouchableOpacity>
-    ));
-  };
-
-  const renderSelectedTab = () => {
-    switch (selectedTab) {
-      case 'Open':
-        return renderJobs(openJobs);
-      case 'Accepted':
-        return renderJobs(acceptedJobs);
-      case 'Completed':
-        return renderJobs(completedJobs);
-      default:
-        return null;
-    }
+  const getCurrentJobs = () => {
+    if (selectedTab === 'Open') return openJobs;
+    if (selectedTab === 'Accepted') return acceptedJobs;
+    return completedJobs;
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Contractor Dashboard</Text>
-
-      <View style={styles.tabContainer}>
-        {['Open', 'Accepted', 'Completed'].map(tab => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, selectedTab === tab && styles.activeTab]}
-            onPress={() => setSelectedTab(tab)}
-          >
-            <Text style={[styles.tabText, selectedTab === tab && styles.activeTabText]}>{tab}</Text>
+      <View style={styles.tabBar}>
+        {['Open', 'Accepted', 'Completed'].map((tab) => (
+          <TouchableOpacity key={tab} onPress={() => setSelectedTab(tab)}>
+            <Text style={[styles.tab, selectedTab === tab && styles.activeTab]}>
+              {tab}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#00aaff" style={{ marginTop: 20 }} />
+        <View style={styles.spinnerContainer}>
+          <ActivityIndicator size="large" color="#007b7f" />
+        </View>
+      ) : getCurrentJobs().length === 0 && timeoutReached ? (
+        <Text style={styles.noJobsText}>No more jobs loaded.</Text>
       ) : (
-        <ScrollView contentContainerStyle={styles.scrollView}>
-          {renderSelectedTab()}
+        <ScrollView style={styles.scroll}>
+          {getCurrentJobs().map((job) => (
+            <JobCard key={job.id} job={job} navigation={navigation} />
+          ))}
         </ScrollView>
       )}
     </View>
@@ -94,13 +95,34 @@ export default function ContractorHomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 20, paddingHorizontal: 15, backgroundColor: '#fff' },
-  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-  scrollView: { paddingBottom: 80 },
-  empty: { textAlign: 'center', marginTop: 20, color: '#999' },
-  tabContainer: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 15 },
-  tab: { paddingVertical: 8, paddingHorizontal: 15, borderRadius: 20, backgroundColor: '#eee' },
-  activeTab: { backgroundColor: '#00aaff' },
-  tabText: { fontSize: 16, color: '#333' },
-  activeTabText: { color: '#fff', fontWeight: 'bold' },
+  container: { flex: 1, padding: 12, backgroundColor: '#fff' },
+  tabBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    backgroundColor: '#f0f0f0',
+  },
+  tab: {
+    fontSize: 16,
+    color: '#444',
+    paddingBottom: 4,
+  },
+  activeTab: {
+    fontWeight: 'bold',
+    color: '#007b7f',
+    borderBottomWidth: 2,
+    borderBottomColor: '#007b7f',
+  },
+  scroll: { marginTop: 10 },
+  spinnerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noJobsText: {
+    marginTop: 40,
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#666',
+  },
 });

@@ -1,16 +1,7 @@
-// firebase.js
-
 import { initializeApp } from 'firebase/app';
-import {
-  getAuth,
-  initializeAuth,
-  getReactNativePersistence,
-} from 'firebase/auth';
-import {
-  initializeFirestore,
-} from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAG_sO6vnMnkaccHstDYPspFsLzVq29THg",
@@ -22,26 +13,12 @@ const firebaseConfig = {
   measurementId: "G-8VKTE7DCVW"
 };
 
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-} catch (err) {
-  console.error("🔥 Firebase failed to initialize:", err);
-}
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-let auth;
-try {
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
-  });
-} catch (err) {
-  auth = getAuth(app);
-}
-
-// ✅ Strict Firestore fallback for Expo
 const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
-  useFetchStreams: true, // ✅ this forces Expo to use fetch instead of WebSocket
+  useFetchStreams: true,
 });
 
 const storage = getStorage(app);

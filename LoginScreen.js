@@ -49,60 +49,68 @@ export default function LoginScreen() {
         <Text style={styles.buttonText}>Log In</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('SignupScreen')}>
+      <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
         <Text style={styles.link}>Don't have an account? Sign Up</Text>
       </TouchableOpacity>
+
+      <Text style={styles.note}>Want to earn money? Apply as a contractor in your account settings after signing up.</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 30,
-    backgroundColor: '#fff',
     flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
     justifyContent: 'center',
-  },
-  logo: {
-    width: '80%',
-    height: 100,
-    alignSelf: 'center',
-    marginBottom: 20,
+    padding: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#008080',
-    marginBottom: 24,
-    textAlign: 'center',
+    marginBottom: 20,
+    color: '#000',
+  },
+  logo: {
+    width: 220,
+    height: 80,
+    marginBottom: 20,
   },
   input: {
+    width: '100%',
+    height: 50,
     borderColor: '#ccc',
     borderWidth: 1,
-    padding: 14,
     borderRadius: 8,
-    marginBottom: 12,
+    paddingHorizontal: 10,
+    marginBottom: 15,
   },
   button: {
     backgroundColor: '#008080',
-    padding: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
     borderRadius: 8,
     marginTop: 10,
   },
   buttonText: {
     color: '#fff',
-    textAlign: 'center',
     fontSize: 16,
+    fontWeight: '600',
   },
   link: {
+    marginTop: 15,
     color: '#008080',
-    marginTop: 18,
-    textAlign: 'center',
     textDecorationLine: 'underline',
+  },
+  note: {
+    marginTop: 10,
+    fontSize: 13,
+    color: '#888',
+    textAlign: 'center'
   },
   error: {
     color: 'red',
     marginBottom: 10,
-    textAlign: 'center',
   },
 });
