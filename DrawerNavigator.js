@@ -9,7 +9,6 @@ import ContractorHomeScreen from './ContractorHomeScreen';
 import ClientHomeScreen from './ClientHomeScreen';
 import PostJobScreen from './PostJobScreen';
 import OpenJobsScreen from './OpenJobsScreen';
-import JobDetailsScreen from './JobDetailsScreen';
 import AccountScreen from './AccountScreen';
 import ContactScreen from './ContactScreen';
 import SettingsScreen from './SettingsScreen';
@@ -53,7 +52,6 @@ const DrawerNavigator = () => {
       <Drawer.Screen name="Home" component={renderHome()} />
       <Drawer.Screen name="Post a Job" component={PostJobScreen} />
       <Drawer.Screen name="Open Jobs" component={OpenJobsScreen} />
-      <Drawer.Screen name="Job Details" component={JobDetailsScreen} />
       <Drawer.Screen name="Account" component={AccountScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
       <Drawer.Screen name="Contact Us" component={ContactScreen} />

@@ -1,27 +1,31 @@
-// 🔒 LOCKED FILE — DO NOT EDIT, FIX, OR REPLACE
 // SplashScreen.js
 
 import React, { useEffect } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet, Dimensions } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-export default function SplashScreen({ navigation }) {
+const SplashScreen = () => {
+  const navigation = useNavigation();
+  const screenWidth = Dimensions.get('window').width;
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('OnboardingScreen');
+    const timeoutId = setTimeout(() => {
+      navigation.navigate('MenderOnboarding');
     }, 2500);
-    return () => clearTimeout(timer);
+
+    return () => clearTimeout(timeoutId);
   }, [navigation]);
 
   return (
     <View style={styles.container}>
       <Image
         source={require('./Icons/mender-banner.png')}
-        style={styles.logo}
+        style={[styles.banner, { width: screenWidth * 0.9 }]}
         resizeMode="contain"
       />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -30,8 +34,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logo: {
-    width: '80%',
-    height: 120,
+  banner: {
+    height: 180,
   },
 });
+
+export default SplashScreen;

@@ -102,7 +102,8 @@ function AdminDrawer() {
 // 🚀 Main App Navigator
 
 export default function MenderOnboardingScreen() {
-  const [initialRoute, setInitialRoute] = useState('SplashScreen');
+  const [initialRoute, setInitialRoute] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -117,12 +118,24 @@ export default function MenderOnboardingScreen() {
         } else {
           setInitialRoute('OnboardingScreen');
         }
+        setCheckingAuth(false);
       } else {
+        // Show splash for 2.5 seconds then go to onboarding
         setInitialRoute('SplashScreen');
+        setTimeout(() => {
+          setInitialRoute('OnboardingScreen');
+          setCheckingAuth(false);
+        }, 2500);
       }
     });
+
     return () => unsubscribe();
   }, []);
+
+  // 🧠 Show splash while checking
+  if (checkingAuth || !initialRoute) {
+    return <SplashScreen />;
+  }
 
   return (
     <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
@@ -134,12 +147,12 @@ export default function MenderOnboardingScreen() {
       <Stack.Screen name="WelcomeBackScreen" component={WelcomeBackScreen} />
       <Stack.Screen name="ApplyContractorScreen" component={ApplyContractorScreen} />
 
-      {/* Drawer Navigators for Role-Based Homes */}
+      {/* Drawer Navigators */}
       <Stack.Screen name="ClientDrawer" component={ClientDrawer} />
       <Stack.Screen name="ContractorDrawer" component={ContractorDrawer} />
       <Stack.Screen name="AdminDrawer" component={AdminDrawer} />
 
-      {/* Job Lifecycle Screens */}
+      {/* Job Screens */}
       <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} />
       <Stack.Screen name="StartJobScreen" component={StartJobScreen} />
       <Stack.Screen name="CompleteJobScreen" component={CompleteJobScreen} />
