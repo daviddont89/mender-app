@@ -1,16 +1,64 @@
-// PaymentOptionsScreen.js
-
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from './firebase';
+import { AuthContext } from './AuthProvider';
 
 export default function PaymentOptionsScreen() {
+  const { user } = useContext(AuthContext);
   const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const options = ['Credit/Debit', 'Venmo', 'PayPal', 'Cash App'];
 
-  const confirm = () => {
-    if (!selected) return Alert.alert('Select a payment method');
-    Alert.alert('Saved', `Payment method set to: ${selected}`);
+  useEffect(() => {
+    if (!user?.uid) return;
+    const fetchOption = async () => {
+      try {
+        const ref = doc(db, 'users', user.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.paymentOption) setSelected(data.paymentOption);
+        }
+      } catch (err) {
+        console.error('Error loading payment option:', err);
+      }
+      setLoading(false);
+    };
+    fetchOption();
+  }, [user]);
+
+  const confirm = async () => {
+    if (!selected) return Alert.alert('Select a payment method first.');
+
+    try {
+      await setDoc(
+        doc(db, 'users', user.uid),
+        { paymentOption: selected },
+        { merge: true }
+      );
+      Alert.alert('Saved', `Payment method set to: ${selected}`);
+    } catch (err) {
+      console.error('Error saving payment option:', err);
+      Alert.alert('Error', 'Could not save payment method.');
+    }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#008080" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -24,7 +72,14 @@ export default function PaymentOptionsScreen() {
           ]}
           onPress={() => setSelected(option)}
         >
-          <Text style={styles.optionText}>{option}</Text>
+          <Text
+            style={[
+              styles.optionText,
+              selected === option && { color: '#008080', fontWeight: 'bold' },
+            ]}
+          >
+            {option}
+          </Text>
         </TouchableOpacity>
       ))}
       <TouchableOpacity style={styles.button} onPress={confirm}>
@@ -44,7 +99,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#f1f1f1',
   },
-  optionText: { fontSize: 18 },
+  optionText: { fontSize: 18, color: '#333' },
   button: {
     marginTop: 20,
     backgroundColor: '#008080',

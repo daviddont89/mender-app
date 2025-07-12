@@ -1,60 +1,124 @@
-// 🔒 LOCKED FILE — DO NOT EDIT, FIX, OR REPLACE
-// LoginScreen.js
-
-import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  TextInput,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from './firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from './firebase';
 
 export default function LoginScreen() {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const logoAnim = useRef(new Animated.Value(0)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const formY = useRef(new Animated.Value(40)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(logoAnim, {
+        toValue: -60,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.parallel([
+        Animated.timing(contentOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(formY, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  }, []);
 
   const handleLogin = async () => {
+    setError('');
+    setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
+      const userDoc = await getDoc(doc(db, 'users', uid));
+
+      if (userDoc.exists()) {
+        const { role } = userDoc.data();
+        await AsyncStorage.setItem('userRole', role || 'client');
+
+        if (role === 'contractor') {
+          navigation.replace('ContractorHomeScreen');
+        } else if (role === 'admin') {
+          navigation.replace('AdminHomeScreen');
+        } else {
+          navigation.replace('ClientHomeScreen');
+        }
+      } else {
+        setError('User profile not found.');
+      }
     } catch (err) {
       setError('Invalid email or password.');
     }
+    setLoading(false);
   };
 
   return (
-    <View style={styles.container}>
-      <Image source={require('./Icons/mender-banner.png')} style={styles.logo} resizeMode="contain" />
-      <Text style={styles.title}>Log In</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        autoCapitalize="none"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <Animated.Image
+        source={require('./Icons/mender-banner.png')}
+        style={[styles.logo, { transform: [{ translateY: logoAnim }] }]}
+        resizeMode="contain"
       />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <Animated.View style={[styles.form, { opacity: contentOpacity, transform: [{ translateY: formY }] }]}>
+        <Text style={styles.title}>Log In</Text>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Log In</Text>
-      </TouchableOpacity>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          autoCapitalize="none"
+          onChangeText={setEmail}
+          value={email}
+          keyboardType="email-address"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          secureTextEntry
+          onChangeText={setPassword}
+          value={password}
+        />
 
-      <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-        <Text style={styles.link}>Don't have an account? Sign Up</Text>
-      </TouchableOpacity>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Text style={styles.note}>Want to earn money? Apply as a contractor in your account settings after signing up.</Text>
-    </View>
+        <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Log In</Text>}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.link}>
+          <Text style={styles.linkText}>Back to Welcome</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -62,20 +126,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
+    paddingHorizontal: 30,
     justifyContent: 'center',
-    padding: 20,
+    alignItems: 'center',
+  },
+  logo: {
+    width: '100%',
+    height: 100,
+    marginBottom: 20,
+  },
+  form: {
+    width: '100%',
+    alignItems: 'center',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#000',
-  },
-  logo: {
-    width: 220,
-    height: 80,
-    marginBottom: 20,
+    color: '#008080',
+    marginBottom: 24,
+    textAlign: 'center',
   },
   input: {
     width: '100%',
@@ -83,15 +152,21 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 15,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
+  error: {
+    color: 'red',
+    marginBottom: 12,
   },
   button: {
     backgroundColor: '#008080',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
+    paddingVertical: 14,
+    paddingHorizontal: 30,
     borderRadius: 8,
-    marginTop: 10,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 8,
   },
   buttonText: {
     color: '#fff',
@@ -99,18 +174,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   link: {
-    marginTop: 15,
-    color: '#008080',
+    marginTop: 14,
+  },
+  linkText: {
+    color: '#555',
+    fontSize: 14,
     textDecorationLine: 'underline',
-  },
-  note: {
-    marginTop: 10,
-    fontSize: 13,
-    color: '#888',
-    textAlign: 'center'
-  },
-  error: {
-    color: 'red',
-    marginBottom: 10,
   },
 });

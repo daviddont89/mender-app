@@ -5,92 +5,147 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  ActivityIndicator,
+  FlatList,
   TouchableOpacity,
-  Button,
+  Image,
+  SafeAreaView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { auth, db } from './firebase';
+import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import JobCard from './components/JobCard';
+import { useNavigation } from '@react-navigation/native';
+import { db } from './firebase';
 
-export default function ClientHomeScreen() {
-  const navigation = useNavigation();
-  const [postedJobs, setPostedJobs] = useState([]);
-  const [completedNearbyJobs, setCompletedNearbyJobs] = useState([]);
+const ClientHomeScreen = () => {
+  const [userJobs, setUserJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const fetchPostedJobs = async () => {
-    const q = query(collection(db, 'jobs'), where('clientId', '==', auth.currentUser.uid));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  };
-
-  const fetchCompletedNearbyJobs = async () => {
-    const q = query(collection(db, 'jobs'), where('status', '==', 'Completed'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  };
-
-  const loadJobs = async () => {
-    setLoading(true);
-    try {
-      const [posted, nearby] = await Promise.all([
-        fetchPostedJobs(),
-        fetchCompletedNearbyJobs(),
-      ]);
-      setPostedJobs(posted);
-      setCompletedNearbyJobs(nearby);
-    } catch (e) {
-      console.error('Error loading jobs:', e);
-    }
-    setLoading(false);
-  };
+  const navigation = useNavigation();
+  const user = getAuth().currentUser;
 
   useEffect(() => {
-    loadJobs();
+    const fetchJobs = async () => {
+      try {
+        if (user) {
+          const q = query(collection(db, 'jobs'), where('postedBy', '==', user.uid));
+          const querySnapshot = await getDocs(q);
+          const jobsData = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setUserJobs(jobsData);
+        }
+      } catch (error) {
+        console.error('Error fetching user jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
   }, []);
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Client Home</Text>
+  const handleDrawerToggle = () => {
+    navigation.openDrawer();
+  };
 
-      <Button title="Post a New Job" onPress={() => navigation.navigate('PostJobScreen')} />
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.jobCard}
+      onPress={() => navigation.navigate('JobDetails', { jobId: item.id })}
+    >
+      <Text style={styles.jobTitle}>{item.title}</Text>
+      <Text style={styles.jobDescription}>{item.description}</Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleDrawerToggle}>
+          <Image source={require('./Icons/Icon.png')} style={styles.logoIcon} />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Welcome to Mender</Text>
+      </View>
+
+      <Text style={styles.sectionTitle}>Your Posted Jobs</Text>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#00aaff" style={{ marginTop: 20 }} />
+        <Text style={styles.loadingText}>Loading...</Text>
+      ) : userJobs.length === 0 ? (
+        <Text style={styles.noJobsText}>You haven't posted any jobs yet.</Text>
       ) : (
-        <ScrollView style={styles.scroll}>
-          <Text style={styles.sectionTitle}>Your Posted Jobs</Text>
-          {postedJobs.length > 0 ? (
-            postedJobs.map(job => (
-              <TouchableOpacity key={job.id} onPress={() => navigation.navigate('JobDetailsScreen', { job })}>
-                <JobCard job={job} />
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text style={styles.empty}>You haven’t posted any jobs yet.</Text>
-          )}
-
-          <Text style={styles.sectionTitle}>Completed Jobs in Your Area</Text>
-          {completedNearbyJobs.length > 0 ? (
-            completedNearbyJobs.map(job => (
-              <JobCard key={job.id} job={job} />
-            ))
-          ) : (
-            <Text style={styles.empty}>No completed jobs found nearby.</Text>
-          )}
-        </ScrollView>
+        <FlatList
+          data={userJobs}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.jobList}
+        />
       )}
-    </View>
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 20, paddingHorizontal: 15, backgroundColor: '#fff' },
-  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-  scroll: { marginTop: 10 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', marginTop: 20, marginBottom: 10 },
-  empty: { textAlign: 'center', color: '#777', marginBottom: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingTop: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logoIcon: {
+    width: 40,
+    height: 40,
+    marginRight: 10,
+  },
+  headerText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#000',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginBottom: 12,
+    color: '#222',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+    marginTop: 40,
+  },
+  noJobsText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 40,
+  },
+  jobList: {
+    paddingBottom: 20,
+  },
+  jobCard: {
+    backgroundColor: '#e7f6f2',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 12,
+    borderColor: '#ccc',
+    borderWidth: 1,
+  },
+  jobTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  jobDescription: {
+    fontSize: 14,
+    color: '#555',
+  },
 });
+
+export default ClientHomeScreen;

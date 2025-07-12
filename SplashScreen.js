@@ -2,16 +2,34 @@
 
 import React, { useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './firebase';
 
-const SplashScreen = () => {
-  const navigation = useNavigation();
+const SplashScreen = ({ navigation }) => {
   const screenWidth = Dimensions.get('window').width;
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      navigation.navigate('MenderOnboarding');
-    }, 2500);
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          try {
+            const role = await AsyncStorage.getItem('userRole');
+            if (role === 'contractor') {
+              navigation.replace('ContractorHomeScreen');
+            } else if (role === 'admin') {
+              navigation.replace('AdminHomeScreen');
+            } else {
+              navigation.replace('ClientHomeScreen');
+            }
+          } catch (err) {
+            navigation.replace('ClientHomeScreen');
+          }
+        } else {
+          navigation.replace('MenderOnboardingScreen');
+        }
+      });
+    }, 1500);
 
     return () => clearTimeout(timeoutId);
   }, [navigation]);
