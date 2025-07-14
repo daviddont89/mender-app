@@ -1,3 +1,5 @@
+// CompleteJobScreen.js
+
 import React, { useState } from 'react';
 import {
   View,
@@ -30,9 +32,9 @@ export default function CompleteJobScreen({ route, navigation }) {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.7,
     });
-    if (!result.cancelled) {
-      if (type === 'photo') setPhoto(result.uri);
-      if (type === 'receipt') setReceipts(prev => [...prev, result.uri]);
+    if (!result.canceled) {
+      if (type === 'photo') setPhoto(result.assets[0].uri);
+      if (type === 'receipt') setReceipts(prev => [...prev, result.assets[0].uri]);
     }
   };
 
@@ -53,7 +55,7 @@ export default function CompleteJobScreen({ route, navigation }) {
               status: 'Completed',
               endTime: Timestamp.now(),
               completedNotes: notes,
-              clientRating: rating,
+              clientRating: rating ? parseInt(rating) : null,
               completionPhotos: [photo],
               receipts,
             });

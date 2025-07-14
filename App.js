@@ -16,6 +16,9 @@ import PostJobScreen from './PostJobScreen';
 import OpenJobsScreen from './OpenJobsScreen';
 import JobDetailsScreen from './JobDetailsScreen';
 import ContractorOnboardingScreen from './ContractorOnboardingScreen';
+import EditJobScreen from './EditJobScreen';
+import JobReviewScreen from './JobReviewScreen';
+import CompleteJobScreen from './CompleteJobScreen';
 
 const Stack = createStackNavigator();
 
@@ -34,6 +37,9 @@ export default function App() {
         <Stack.Screen name="OpenJobsScreen" component={OpenJobsScreen} />
         <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} />
         <Stack.Screen name="ContractorOnboardingScreen" component={ContractorOnboardingScreen} />
+        <Stack.Screen name="EditJobScreen" component={EditJobScreen} />
+        <Stack.Screen name="JobReviewScreen" component={JobReviewScreen} />
+        <Stack.Screen name="CompleteJobScreen" component={CompleteJobScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
