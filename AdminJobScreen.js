@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Picker,
+  
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useNavigation } from '@react-navigation/native';

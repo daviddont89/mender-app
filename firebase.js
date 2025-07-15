@@ -23,4 +23,5 @@ const db = initializeFirestore(app, {
 
 const storage = getStorage(app);
 
-export { auth, db, storage };
+export { app, auth, db, storage };
+export default app;

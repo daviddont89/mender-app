@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { getDocs, collection, doc, updateDoc } from 'firebase/firestore';
-import { auth, firestore } from './firebase';
+import { auth, db } from './firebase';
 import { useNavigation } from '@react-navigation/native';
 
 const roles = ['client', 'contractor', 'admin'];
@@ -15,7 +15,7 @@ const AdminScreen = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const snapshot = await getDocs(collection(firestore, 'users'));
+     const snapshot = await getDocs(collection(db, 'users'));
       const userList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -33,7 +33,7 @@ const AdminScreen = () => {
     const newRole = roles[(currentIndex + 1) % roles.length];
 
     try {
-      await updateDoc(doc(firestore, 'users', userId), { role: newRole });
+       await updateDoc(doc(db, 'users', userId), { role: newRole });
       Alert.alert('Success', `Role changed to ${newRole}`);
       fetchUsers();
     } catch (error) {
