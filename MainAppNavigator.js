@@ -23,7 +23,7 @@ import useUserRole from './useUserRole';
 const Stack = createNativeStackNavigator();
 
 export default function MainAppNavigator() {
-  const role = useUserRole();
+  const { role } = useUserRole();
 
   // Choose base screen by role
   const getInitialScreen = () => {

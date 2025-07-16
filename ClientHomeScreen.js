@@ -1,218 +1,255 @@
-import React, { useEffect, useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  Image,
-  useWindowDimensions,
-  StatusBar,
-  SafeAreaView,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { auth, db } from './firebase';
 import { Ionicons } from '@expo/vector-icons';
-
-const slides = [
-  {
-    key: 'slide1',
-    title: 'Welcome to Mender!',
-    description: 'Your one-stop app for finding reliable contractors.',
-    image: require('./assets/slide1.png'),
-  },
-  {
-    key: 'slide2',
-    title: 'Post a Job Easily',
-    description: 'Fill out a form, upload media, and get started.',
-    image: require('./assets/slide2.png'),
-  },
-  {
-    key: 'slide3',
-    title: 'Track Progress',
-    description: 'Monitor work and communicate clearly.',
-    image: require('./assets/slide3.png'),
-  },
-];
+import { auth, db } from './firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export default function ClientHomeScreen() {
   const navigation = useNavigation();
   const [jobs, setJobs] = useState([]);
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const { width } = useWindowDimensions();
-  const flatListRef = useRef(null);
+  const [messages, setMessages] = useState(1); // Dummy value for now
+  const [user, setUser] = useState(auth.currentUser);
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const q = query(
-        collection(db, 'jobs'),
-        where('clientId', '==', user.uid)
-      );
-      const querySnapshot = await getDocs(q);
-      const jobData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setJobs(jobData);
-    };
-
-    fetchJobs();
+    fetchClientJobs();
   }, []);
 
-  const renderItem = ({ item }) => (
-    <View style={[styles.slide, { width }]}>
-      <Image
-        source={item.image}
-        style={styles.image}
-        resizeMode="contain"
-      />
-      <Text style={styles.slideTitle}>{item.title}</Text>
-      <Text style={styles.slideDescription}>{item.description}</Text>
-    </View>
-  );
-
-  const handleNext = () => {
-    const nextIndex = Math.min(currentSlideIndex + 1, slides.length - 1);
-    flatListRef.current.scrollToIndex({ index: nextIndex });
-    setCurrentSlideIndex(nextIndex);
+  const fetchClientJobs = async () => {
+    try {
+      const q = query(collection(db, 'jobs'), where('clientId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      const jobList = [];
+      querySnapshot.forEach((doc) => {
+        jobList.push({ id: doc.id, ...doc.data() });
+      });
+      setJobs(jobList);
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    }
   };
 
-  const handlePrev = () => {
-    const prevIndex = Math.max(currentSlideIndex - 1, 0);
-    flatListRef.current.scrollToIndex({ index: prevIndex });
-    setCurrentSlideIndex(prevIndex);
-  };
-
-  const handlePostJob = () => navigation.navigate('PostJobScreen');
+  const activeJob = jobs.find((job) => job.status !== 'Completed');
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
+    <ScrollView style={styles.container}>
+      {/* Profile */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          onPress={() => {
+            try {
+              navigation.dispatch(DrawerActions.openDrawer());
+            } catch (e) {
+              console.warn('Drawer not available:', e.message);
+            }
+          }}
         >
           <Ionicons name="menu" size={28} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Mender</Text>
+        <View style={styles.profileCard}>
+          <Image
+            source={require('./assets/avatar.png')} // Replace with user's photo
+            style={styles.avatar}
+          />
+          <Text style={styles.name}>{user?.displayName || 'Client'}</Text>
+        </View>
         <View style={{ width: 28 }} />
       </View>
 
-      {jobs.length === 0 ? (
-        <View style={styles.slideshowContainer}>
-          <FlatList
-            ref={flatListRef}
-            data={slides}
-            renderItem={renderItem}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.key}
-            onMomentumScrollEnd={(event) => {
-              const newIndex = Math.round(
-                event.nativeEvent.contentOffset.x / width
-              );
-              setCurrentSlideIndex(newIndex);
-            }}
-            initialScrollIndex={0}
-            getItemLayout={(data, index) => ({
-              length: width,
-              offset: width * index,
-              index,
-            })}
-          />
-          <View style={styles.navButtons}>
-            <TouchableOpacity onPress={handlePrev} disabled={currentSlideIndex === 0}>
-              <Ionicons name="arrow-back-circle" size={32} color={currentSlideIndex === 0 ? '#ccc' : '#007f7f'} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleNext} disabled={currentSlideIndex === slides.length - 1}>
-              <Ionicons name="arrow-forward-circle" size={32} color={currentSlideIndex === slides.length - 1 ? '#ccc' : '#007f7f'} />
+      {/* Active Job */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>My Active Jobs</Text>
+        {activeJob ? (
+          <View style={styles.card}>
+            <Text style={styles.jobTitle}>{activeJob.title}</Text>
+            <Text style={styles.jobStatus}>In Progress</Text>
+            <Text style={styles.jobUpdate}>Last activity: {activeJob.lastUpdated || '2h ago'}</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('JobDetails', { jobId: activeJob.id })}>
+              <Text style={styles.link}>View Details</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      ) : (
-        <View style={styles.content}>
-          {/* TODO: Show job cards or active client data */}
-          <Text>Your posted jobs will appear here.</Text>
-        </View>
-      )}
+        ) : (
+          <Text style={styles.placeholder}>No active jobs</Text>
+        )}
+      </View>
 
-      <TouchableOpacity style={styles.button} onPress={handlePostJob}>
-        <Text style={styles.buttonText}>Post a Job</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+      {/* Promo Banner */}
+      <View style={styles.banner}>
+        <Text style={styles.bannerText}>🌞 Summer Deck Repair Season</Text>
+        <Text style={styles.bannerSub}>Book Now and Save $50!</Text>
+      </View>
+
+      {/* Job Inspiration */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Job Inspiration</Text>
+        <View style={styles.inspirationRow}>
+          <Image source={require('./assets/fence1.png')} style={styles.inspirationImage} />
+          <Image source={require('./assets/fence2.png')} style={styles.inspirationImage} />
+        </View>
+      </View>
+
+      {/* Progress Tracker */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>2. Progress Tracker</Text>
+        <Text style={styles.subtext}>Upload Job Photos</Text>
+      </View>
+
+      {/* Dashboard and Messages */}
+      <View style={styles.row}>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricTitle}>Client Dashboard</Text>
+          <Text style={styles.metricItem}>7 jobs posted</Text>
+          <Text style={styles.metricItem}>4.8 avg rating</Text>
+          <Text style={styles.metricItem}>3.2d saved</Text>
+        </View>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricTitle}>Messages</Text>
+          <Text style={styles.metricItem}>You have {messages} new message</Text>
+          <TouchableOpacity style={styles.linkBox}>
+            <Text style={styles.link}>View</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Referral */}
+      <View style={styles.referral}>
+        <Text style={styles.referralText}>🎁 Refer a Friend, Earn $25</Text>
+        <TouchableOpacity>
+          <Text style={styles.referralLink}>Share Invite</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
   },
-  headerText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#007f7f',
-  },
-  slideshowContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  profileCard: {
     alignItems: 'center',
   },
-  slide: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginBottom: 4,
   },
-  image: {
-    height: 200,
-    width: '100%',
-    marginBottom: 20,
-  },
-  slideTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-  },
-  slideDescription: {
+  name: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    fontWeight: '600',
+  },
+  section: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  subtext: {
+    fontSize: 14,
+    color: '#555',
+  },
+  card: {
+    backgroundColor: '#f5f5f5',
+    padding: 12,
+    borderRadius: 8,
+  },
+  jobTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  jobStatus: {
+    fontSize: 14,
+    color: 'green',
+    marginTop: 4,
+  },
+  jobUpdate: {
+    fontSize: 12,
+    color: '#555',
+    marginTop: 2,
+  },
+  link: {
+    color: '#0084ff',
     marginTop: 8,
   },
-  navButtons: {
+  linkBox: {
+    marginTop: 10,
+    padding: 6,
+    backgroundColor: '#e6f0ff',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  placeholder: {
+    fontSize: 14,
+    color: '#888',
+  },
+  banner: {
+    backgroundColor: '#ffa733',
+    padding: 16,
+    marginHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  bannerText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  bannerSub: {
+    color: '#fff',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  inspirationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: 120,
-    marginTop: 10,
   },
-  content: {
-    flex: 1,
-    padding: 20,
+  inspirationImage: {
+    width: '48%',
+    height: 100,
+    borderRadius: 8,
   },
-  button: {
-    backgroundColor: '#007f7f',
+  row: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    justifyContent: 'space-between',
+  },
+  metricCard: {
+    backgroundColor: '#f0f0f0',
+    padding: 12,
+    borderRadius: 8,
+    width: '48%',
+  },
+  metricTitle: {
+    fontWeight: '600',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  metricItem: {
+    fontSize: 12,
+    color: '#444',
+  },
+  referral: {
+    backgroundColor: '#d9fdd3',
+    margin: 16,
     padding: 16,
-    margin: 20,
     borderRadius: 10,
+    alignItems: 'center',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    textAlign: 'center',
+  referralText: {
+    fontWeight: '600',
+    fontSize: 16,
+    marginBottom: 6,
+  },
+  referralLink: {
+    color: '#008000',
+    fontSize: 14,
   },
 });

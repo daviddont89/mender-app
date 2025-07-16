@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
@@ -54,28 +53,26 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const uid = userCredential.user.uid;
       const userDoc = await getDoc(doc(db, 'users', uid));
 
-      if (userDoc.exists()) {
+      if (!userDoc.exists()) {
+        setError('User profile not found.');
+      } else {
         const { role } = userDoc.data();
         await AsyncStorage.setItem('userRole', role || 'client');
-
-        if (role === 'contractor') {
-          navigation.replace('ContractorHomeScreen');
-        } else if (role === 'admin') {
-          navigation.replace('AdminHomeScreen');
-        } else {
-          navigation.replace('ClientHomeScreen');
-        }
-      } else {
-        setError('User profile not found.');
+        navigation.replace('MainApp');
       }
-    } catch (err) {
+    } catch {
       setError('Invalid email or password.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -89,7 +86,12 @@ export default function LoginScreen() {
         resizeMode="contain"
       />
 
-      <Animated.View style={[styles.form, { opacity: contentOpacity, transform: [{ translateY: formY }] }]}>
+      <Animated.View
+        style={[
+          styles.form,
+          { opacity: contentOpacity, transform: [{ translateY: formY }] },
+        ]}
+      >
         <Text style={styles.title}>Log In</Text>
 
         <TextInput
@@ -110,8 +112,16 @@ export default function LoginScreen() {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Log In</Text>}
+        <TouchableOpacity
+          onPress={handleLogin}
+          style={styles.button}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Log In</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.link}>
