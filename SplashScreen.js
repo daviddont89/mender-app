@@ -1,19 +1,23 @@
-// SplashScreen.js
-
 import React, { useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
+import * as SplashScreen from 'expo-splash-screen';
 
-const SplashScreen = ({ navigation }) => {
+// Prevent splash from auto-hiding before we're ready
+SplashScreen.preventAutoHideAsync();
+
+const SplashScreenComponent = ({ navigation }) => {
   const screenWidth = Dimensions.get('window').width;
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    const timer = setTimeout(() => {
       onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          try {
+        try {
+          await SplashScreen.hideAsync();
+
+          if (user) {
             const role = await AsyncStorage.getItem('userRole');
             if (role === 'contractor') {
               navigation.replace('ContractorHomeScreen');
@@ -22,16 +26,18 @@ const SplashScreen = ({ navigation }) => {
             } else {
               navigation.replace('ClientHomeScreen');
             }
-          } catch (err) {
-            navigation.replace('ClientHomeScreen');
+          } else {
+            navigation.replace('MenderOnboardingScreen');
           }
-        } else {
+        } catch (err) {
+          console.error('Splash navigation error:', err);
+          await SplashScreen.hideAsync();
           navigation.replace('MenderOnboardingScreen');
         }
       });
     }, 1500);
 
-    return () => clearTimeout(timeoutId);
+    return () => clearTimeout(timer);
   }, [navigation]);
 
   return (
@@ -57,4 +63,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SplashScreen;
+export default SplashScreenComponent;

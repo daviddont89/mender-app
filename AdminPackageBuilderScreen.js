@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TextInput, Button, StyleSheet, ScrollView, FlatList, TouchableOpacity, Alert, Image
+  View, Text, TextInput, Button, StyleSheet, ScrollView, TouchableOpacity, Alert, Image
 } from 'react-native';
 import { db, storage } from './firebase';
 import {
   collection, addDoc, getDocs, updateDoc, deleteDoc, doc, Timestamp,
 } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function AdminPackageBuilderScreen() {
@@ -15,8 +16,13 @@ export default function AdminPackageBuilderScreen() {
   const [desc, setDesc] = useState('');
   const [price, setPrice] = useState('');
   const [season, setSeason] = useState(getDefaultSeason());
+  const [tier, setTier] = useState('Essentials');
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
   const [services, setServices] = useState(['']);
-  const [contractors, setContractors] = useState([]);
+  const [contractorPriority, setContractorPriority] = useState([]);
+  const [contractorIdInput, setContractorIdInput] = useState('');
+  const [contractorRankInput, setContractorRankInput] = useState('');
   const [active, setActive] = useState(true);
   const [logoUri, setLogoUri] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -69,8 +75,11 @@ export default function AdminPackageBuilderScreen() {
       description: desc,
       price: parseFloat(price),
       season,
+      tier,
+      startDate: Timestamp.fromDate(startDate),
+      endDate: Timestamp.fromDate(endDate),
       services: services.filter(s => s),
-      contractorIds: contractors,
+      contractorPriority,
       active,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -98,8 +107,13 @@ export default function AdminPackageBuilderScreen() {
     setDesc('');
     setPrice('');
     setSeason(getDefaultSeason());
+    setTier('Essentials');
+    setStartDate(new Date());
+    setEndDate(new Date());
     setServices(['']);
-    setContractors([]);
+    setContractorPriority([]);
+    setContractorIdInput('');
+    setContractorRankInput('');
     setLogoUri(null);
     setEditingId(null);
     setActive(true);
@@ -110,8 +124,11 @@ export default function AdminPackageBuilderScreen() {
     setDesc(pkg.description);
     setPrice(pkg.price.toString());
     setSeason(pkg.season);
-    setServices(pkg.services);
-    setContractors(pkg.contractorIds || []);
+    setTier(pkg.tier || 'Essentials');
+    setStartDate(pkg.startDate?.toDate?.() || new Date());
+    setEndDate(pkg.endDate?.toDate?.() || new Date());
+    setServices(pkg.services || ['']);
+    setContractorPriority(pkg.contractorPriority || []);
     setLogoUri(pkg.logoURL || null);
     setActive(pkg.active);
     setEditingId(pkg.id);
@@ -131,6 +148,15 @@ export default function AdminPackageBuilderScreen() {
     ]);
   };
 
+  const addPriorityEntry = () => {
+    if (!contractorIdInput || !contractorRankInput) return;
+    const rank = parseInt(contractorRankInput);
+    if (isNaN(rank)) return Alert.alert('Invalid Rank', 'Enter a number for rank.');
+    setContractorPriority(prev => [...prev, { contractorId: contractorIdInput, rank }]);
+    setContractorIdInput('');
+    setContractorRankInput('');
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.heading}>
@@ -139,16 +165,24 @@ export default function AdminPackageBuilderScreen() {
 
       <TextInput style={styles.input} placeholder="Title" value={title} onChangeText={setTitle} />
       <TextInput style={styles.input} placeholder="Description" value={desc} onChangeText={setDesc} multiline />
+      <TextInput style={styles.input} placeholder="Price (USD)" value={price} onChangeText={setPrice} keyboardType="numeric" />
+      <TextInput style={styles.input} placeholder="Season" value={season} onChangeText={setSeason} />
 
-      <TextInput
-        style={styles.input} placeholder="Price (USD)"
-        value={price} onChangeText={setPrice} keyboardType="numeric"
-      />
+      <Text style={styles.label}>Tier:</Text>
+      <View style={styles.switchRow}>
+        {['Essentials', 'Deluxe', 'Premium'].map(opt => (
+          <TouchableOpacity key={opt} onPress={() => setTier(opt)} style={{ marginRight: 10 }}>
+            <Text style={{ color: tier === opt ? '#008080' : '#888' }}>
+              {tier === opt ? '●' : '○'} {opt}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-      <TextInput
-        style={styles.input} placeholder="Season (Winter/Spring/etc)"
-        value={season} onChangeText={setSeason}
-      />
+      <Text style={styles.label}>Start Date:</Text>
+      <DateTimePicker value={startDate} mode="date" display="default" onChange={(e, date) => setStartDate(date || startDate)} />
+      <Text style={styles.label}>End Date:</Text>
+      <DateTimePicker value={endDate} mode="date" display="default" onChange={(e, date) => setEndDate(date || endDate)} />
 
       <Text style={styles.label}>Services Included:</Text>
       {services.map((service, idx) => (
@@ -166,13 +200,30 @@ export default function AdminPackageBuilderScreen() {
       ))}
       <Button title="Add Another Service" onPress={() => setServices([...services, ''])} />
 
-      <Text style={styles.label}>Contractor UIDs (Temp):</Text>
+      <Text style={styles.label}>Contractor Priority List:</Text>
       <TextInput
         style={styles.input}
-        placeholder="Comma-separated UIDs"
-        value={contractors.join(',')}
-        onChangeText={(val) => setContractors(val.split(',').map(s => s.trim()))}
+        placeholder="Contractor ID"
+        value={contractorIdInput}
+        onChangeText={setContractorIdInput}
       />
+      <TextInput
+        style={styles.input}
+        placeholder="Rank (1 = top priority)"
+        keyboardType="numeric"
+        value={contractorRankInput}
+        onChangeText={setContractorRankInput}
+      />
+      <Button title="Add Contractor Priority" onPress={addPriorityEntry} />
+
+      {contractorPriority.length > 0 && (
+        <View style={{ marginTop: 10 }}>
+          <Text style={styles.label}>Assigned Priority:</Text>
+          {contractorPriority.map((c, i) => (
+            <Text key={i}>#{c.rank} – {c.contractorId}</Text>
+          ))}
+        </View>
+      )}
 
       <Button title="Pick Logo Image" onPress={pickLogo} />
       {logoUri && <Image source={{ uri: logoUri }} style={styles.logoPreview} />}
@@ -191,9 +242,13 @@ export default function AdminPackageBuilderScreen() {
         <View key={pkg.id} style={styles.pkgCard}>
           <Text style={styles.pkgTitle}>{pkg.title} - ${pkg.price}</Text>
           <Text>{pkg.description}</Text>
-          <Text>Season: {pkg.season}</Text>
+          <Text>Season: {pkg.season} | Tier: {pkg.tier}</Text>
+          <Text>Dates: {pkg.startDate?.toDate?.().toLocaleDateString()} → {pkg.endDate?.toDate?.().toLocaleDateString()}</Text>
           <Text>Services: {pkg.services?.join(', ')}</Text>
           <Text>Active: {pkg.active ? 'Yes' : 'No'}</Text>
+          {pkg.contractorPriority?.length > 0 && (
+            <Text>Priority List: {pkg.contractorPriority.map(p => `#${p.rank}:${p.contractorId}`).join(', ')}</Text>
+          )}
           <View style={styles.cardButtons}>
             <Button title="Edit" onPress={() => editPackage(pkg)} />
             <Button title="Delete" color="red" onPress={() => deletePackage(pkg.id)} />
@@ -211,7 +266,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
     padding: 10, marginBottom: 12,
   },
-  label: { fontWeight: 'bold', marginTop: 10 },
+  label: { fontWeight: 'bold', marginTop: 10, marginBottom: 6 },
   logoPreview: { width: '100%', height: 140, marginTop: 10, borderRadius: 8 },
   switchRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 12 },
   toggle: { fontSize: 16, marginLeft: 10 },

@@ -24,17 +24,25 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const logoAnim = useRef(new Animated.Value(0)).current;
+  const logoY = useRef(new Animated.Value(0)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
-  const formY = useRef(new Animated.Value(40)).current;
+  const formY = useRef(new Animated.Value(30)).current;
+  const logoScale = useRef(new Animated.Value(1.2)).current;
 
   useEffect(() => {
     Animated.sequence([
-      Animated.timing(logoAnim, {
-        toValue: -60,
-        duration: 800,
-        useNativeDriver: true,
-      }),
+      Animated.parallel([
+        Animated.timing(logoY, {
+          toValue: -80,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoScale, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
       Animated.parallel([
         Animated.timing(contentOpacity, {
           toValue: 1,
@@ -85,11 +93,27 @@ export default function LoginScreen() {
     >
       <Animated.Image
         source={require('./Icons/mender-banner.png')}
-        style={[styles.logo, { transform: [{ translateY: logoAnim }] }]}
+        style={[
+          styles.logo,
+          {
+            transform: [
+              { translateY: logoY },
+              { scale: logoScale },
+            ],
+          },
+        ]}
         resizeMode="contain"
       />
 
-      <Animated.View style={[styles.form, { opacity: contentOpacity, transform: [{ translateY: formY }] }]}>
+      <Animated.View
+        style={[
+          styles.form,
+          {
+            opacity: contentOpacity,
+            transform: [{ translateY: formY }],
+          },
+        ]}
+      >
         <Text style={styles.title}>Log In</Text>
 
         <TextInput
@@ -132,8 +156,8 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: '100%',
-    height: 100,
-    marginBottom: 20,
+    height: 180,
+    marginBottom: 0,
   },
   form: {
     width: '100%',

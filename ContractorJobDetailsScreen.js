@@ -1,29 +1,36 @@
-// ClientJobDetailsScreen.js
+// ContractorJobDetailsScreen.js
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, Button, Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
-export default function ClientJobDetailsScreen({ route }) {
+export default function ContractorJobDetailsScreen({ route }) {
   const { job } = route.params;
-  const navigation = useNavigation();
   const userId = auth.currentUser.uid;
+  const navigation = useNavigation();
 
-  const isOwner = job.clientId === userId;
-  const isAdmin = job.adminOverride === true;
+  const isAcceptedByThisContractor = job.contractorId === userId;
+  const isUnclaimed = !job.contractorId;
 
-  const handleEdit = () => {
-    navigation.navigate('EditJobScreen', { job });
+  const handleAccept = async () => {
+    try {
+      await updateDoc(doc(db, 'jobs', job.id), {
+        contractorId: userId,
+        status: 'Accepted',
+      });
+      Alert.alert('Job Accepted', 'You have claimed this job.');
+      navigation.goBack();
+    } catch (e) {
+      console.error('Accept Error:', e);
+      Alert.alert('Error', 'Unable to accept job.');
+    }
   };
 
-  const handleCancel = () => {
-    Alert.alert(
-      'Cancel Job Request?',
-      'Cancelling a job request will require admin approval and may delay your project.',
-      [{ text: 'Dismiss' }, { text: 'Request Cancel', onPress: () => console.log('Cancel requested') }]
-    );
+  const handleDecline = () => {
+    Alert.alert('Not Implemented', 'Decline job logic to be added.');
   };
 
   return (
@@ -43,10 +50,6 @@ export default function ClientJobDetailsScreen({ route }) {
         <Text style={styles.label}>Description</Text>
         <Text style={styles.value}>{job.description}</Text>
 
-        <Text style={styles.label}>Location</Text>
-        <Text style={styles.value}>{job.jobAddress}</Text>
-        <Text style={styles.value}>ZIP: {job.zip}</Text>
-
         <Text style={styles.label}>Urgency</Text>
         <Text style={styles.value}>{job.urgency}</Text>
 
@@ -63,14 +66,26 @@ export default function ClientJobDetailsScreen({ route }) {
             <Text style={styles.value}>{job.specialInstructions}</Text>
           </>
         )}
+
+        {isAcceptedByThisContractor && (
+          <>
+            <Text style={styles.label}>Job Address</Text>
+            <Text style={styles.value}>{job.jobAddress}</Text>
+            <Text style={styles.value}>ZIP: {job.zip}</Text>
+          </>
+        )}
       </View>
 
-      {(isOwner || isAdmin) && (
+      {isUnclaimed && (
         <View style={styles.actions}>
-          <Button title="Edit Job" onPress={handleEdit} />
-          <View style={{ height: 12 }} />
-          <Button color="#cc0000" title="Cancel Job" onPress={handleCancel} />
+          <Button title="Accept Job" onPress={handleAccept} />
+          <View style={{ height: 10 }} />
+          <Button title="Decline Job" color="#999" onPress={handleDecline} />
         </View>
+      )}
+
+      {isAcceptedByThisContractor && (
+        <Text style={styles.note}>✅ You've accepted this job.</Text>
       )}
     </ScrollView>
   );
@@ -81,12 +96,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: 'bold', color: '#008080', marginBottom: 8 },
   status: { fontSize: 16, fontWeight: '500', color: '#666', marginBottom: 14 },
   photoRow: { marginBottom: 16 },
-  photo: {
-    width: 100, height: 100, borderRadius: 8,
-    marginRight: 10,
-  },
+  photo: { width: 100, height: 100, borderRadius: 8, marginRight: 10 },
   section: { marginBottom: 20 },
   label: { fontWeight: 'bold', marginTop: 10 },
   value: { fontSize: 16, color: '#333' },
   actions: { marginTop: 20 },
+  note: { color: '#008000', marginTop: 20, fontWeight: '600' },
 });
