@@ -1,124 +1,143 @@
+// ClientHomeScreen.js
+
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import { auth, db } from './firebase';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Dimensions,
+  Image,
+} from 'react-native';
+import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { db } from './firebase';
+
+const { width } = Dimensions.get('window');
+
+const TUTORIAL = [
+  {
+    key: '1',
+    title: 'How to Post a Job',
+    text: 'Tap the "Post a Job" button and describe your project. Add photos and set urgency.',
+    icon: require('./Icons/pencil.png'),
+  },
+  {
+    key: '2',
+    title: 'How Invoicing Works',
+    text: 'Jobs are billed at $75/hr. You’ll receive a digital invoice after completion.',
+    icon: require('./Icons/receiptblueandblack.png'),
+  },
+  {
+    key: '3',
+    title: 'Track Your Job',
+    text: 'See real-time updates, time logs, and uploaded progress photos from your contractor.',
+    icon: require('./Icons/icons8-time-card-30.png'),
+  },
+  {
+    key: '4',
+    title: 'Rate Your Contractor',
+    text: 'After the job is done, leave a review to help improve quality and transparency.',
+    icon: require('./Icons/handshake.png'),
+  },
+];
 
 export default function ClientHomeScreen() {
+  const [userJobs, setUserJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
-  const [jobs, setJobs] = useState([]);
-  const [messages, setMessages] = useState(1); // Dummy value for now
-  const [user, setUser] = useState(auth.currentUser);
+  const user = getAuth().currentUser;
 
   useEffect(() => {
-    fetchClientJobs();
+    const fetchJobs = async () => {
+      try {
+        if (user) {
+          const q = query(collection(db, 'jobs'), where('postedBy', '==', user.uid));
+          const querySnapshot = await getDocs(q);
+          const jobsData = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setUserJobs(jobsData);
+        }
+      } catch (error) {
+        console.error('Error fetching user jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
   }, []);
 
-  const fetchClientJobs = async () => {
-    try {
-      const q = query(collection(db, 'jobs'), where('clientId', '==', user.uid));
-      const querySnapshot = await getDocs(q);
-      const jobList = [];
-      querySnapshot.forEach((doc) => {
-        jobList.push({ id: doc.id, ...doc.data() });
-      });
-      setJobs(jobList);
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
-    }
+  const openDrawer = () => {
+    navigation.dispatch(DrawerActions.openDrawer());
   };
 
-  const activeJob = jobs.find((job) => job.status !== 'Completed');
+  const renderJobCard = ({ item }) => (
+    <TouchableOpacity
+      style={styles.jobCard}
+      onPress={() => navigation.navigate('JobDetailsScreen', { jobId: item.id })}
+    >
+      <Text style={styles.jobTitle}>{item.title}</Text>
+      <Text style={styles.jobDesc}>{item.description}</Text>
+    </TouchableOpacity>
+  );
+
+  const TutorialSlide = ({ item }) => (
+    <View style={styles.slide}>
+      <Image source={item.icon} style={styles.icon} resizeMode="contain" />
+      <Text style={styles.slideTitle}>{item.title}</Text>
+      <Text style={styles.slideText}>{item.text}</Text>
+    </View>
+  );
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Profile */}
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => {
-            try {
-              navigation.dispatch(DrawerActions.openDrawer());
-            } catch (e) {
-              console.warn('Drawer not available:', e.message);
-            }
-          }}
-        >
-          <Ionicons name="menu" size={28} color="#000" />
+        <TouchableOpacity onPress={openDrawer} style={styles.drawerButton}>
+          <Text style={styles.drawerText}>☰</Text>
         </TouchableOpacity>
-        <View style={styles.profileCard}>
-          <Image
-            source={require('./assets/avatar.png')} // Replace with user's photo
-            style={styles.avatar}
-          />
-          <Text style={styles.name}>{user?.displayName || 'Client'}</Text>
-        </View>
-        <View style={{ width: 28 }} />
+        <Text style={styles.headerTitle}>Mender</Text>
       </View>
 
-      {/* Active Job */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>My Active Jobs</Text>
-        {activeJob ? (
-          <View style={styles.card}>
-            <Text style={styles.jobTitle}>{activeJob.title}</Text>
-            <Text style={styles.jobStatus}>In Progress</Text>
-            <Text style={styles.jobUpdate}>Last activity: {activeJob.lastUpdated || '2h ago'}</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('JobDetails', { jobId: activeJob.id })}>
-              <Text style={styles.link}>View Details</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <Text style={styles.placeholder}>No active jobs</Text>
-        )}
-      </View>
+      {/* Job Feed */}
+      <FlatList
+        data={userJobs}
+        keyExtractor={item => item.id}
+        renderItem={renderJobCard}
+        ListEmptyComponent={
+          !loading && (
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              style={styles.carousel}
+            >
+              {TUTORIAL.map(item => (
+                <TutorialSlide key={item.key} item={item} />
+              ))}
+            </ScrollView>
+          )
+        }
+        contentContainerStyle={
+          userJobs.length === 0 && !loading ? { flexGrow: 1, justifyContent: 'center' } : null
+        }
+      />
 
-      {/* Promo Banner */}
-      <View style={styles.banner}>
-        <Text style={styles.bannerText}>🌞 Summer Deck Repair Season</Text>
-        <Text style={styles.bannerSub}>Book Now and Save $50!</Text>
-      </View>
-
-      {/* Job Inspiration */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Job Inspiration</Text>
-        <View style={styles.inspirationRow}>
-          <Image source={require('./assets/fence1.png')} style={styles.inspirationImage} />
-          <Image source={require('./assets/fence2.png')} style={styles.inspirationImage} />
-        </View>
-      </View>
-
-      {/* Progress Tracker */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>2. Progress Tracker</Text>
-        <Text style={styles.subtext}>Upload Job Photos</Text>
-      </View>
-
-      {/* Dashboard and Messages */}
-      <View style={styles.row}>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricTitle}>Client Dashboard</Text>
-          <Text style={styles.metricItem}>7 jobs posted</Text>
-          <Text style={styles.metricItem}>4.8 avg rating</Text>
-          <Text style={styles.metricItem}>3.2d saved</Text>
-        </View>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricTitle}>Messages</Text>
-          <Text style={styles.metricItem}>You have {messages} new message</Text>
-          <TouchableOpacity style={styles.linkBox}>
-            <Text style={styles.link}>View</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Referral */}
-      <View style={styles.referral}>
-        <Text style={styles.referralText}>🎁 Refer a Friend, Earn $25</Text>
-        <TouchableOpacity>
-          <Text style={styles.referralLink}>Share Invite</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      {/* Post Job Button */}
+      <TouchableOpacity
+        style={styles.postJobButton}
+        onPress={() => navigation.navigate('PostJobScreen')}
+      >
+        <Text style={styles.postJobText}>Post a Job</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 }
 
@@ -127,129 +146,73 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    justifyContent: 'space-between',
-  },
-  profileCard: {
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginBottom: 4,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  section: {
+    backgroundColor: '#008080',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingVertical: 12,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
+  drawerButton: {
+    marginRight: 16,
   },
-  subtext: {
-    fontSize: 14,
-    color: '#555',
+  drawerText: {
+    fontSize: 24,
+    color: '#fff',
   },
-  card: {
-    backgroundColor: '#f5f5f5',
-    padding: 12,
-    borderRadius: 8,
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  jobCard: {
+    backgroundColor: '#f4f4f4',
+    margin: 10,
+    padding: 15,
+    borderRadius: 10,
   },
   jobTitle: {
-    fontSize: 16,
+    fontSize: 18,
+    color: '#008080',
     fontWeight: 'bold',
   },
-  jobStatus: {
+  jobDesc: {
     fontSize: 14,
-    color: 'green',
-    marginTop: 4,
+    color: '#333',
   },
-  jobUpdate: {
-    fontSize: 12,
-    color: '#555',
-    marginTop: 2,
-  },
-  link: {
-    color: '#0084ff',
-    marginTop: 8,
-  },
-  linkBox: {
-    marginTop: 10,
-    padding: 6,
-    backgroundColor: '#e6f0ff',
-    borderRadius: 5,
+  postJobButton: {
+    backgroundColor: '#008080',
+    padding: 18,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 20,
     alignItems: 'center',
   },
-  placeholder: {
-    fontSize: 14,
-    color: '#888',
-  },
-  banner: {
-    backgroundColor: '#ffa733',
-    padding: 16,
-    marginHorizontal: 16,
-    borderRadius: 10,
-    marginBottom: 16,
-  },
-  bannerText: {
+  postJobText: {
     color: '#fff',
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  carousel: {
+    flexGrow: 0,
+  },
+  slide: {
+    width,
+    padding: 25,
+    alignItems: 'center',
+  },
+  slideTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#008080',
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  slideText: {
     fontSize: 16,
-  },
-  bannerSub: {
-    color: '#fff',
-    fontSize: 14,
-    marginTop: 4,
-  },
-  inspirationRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  inspirationImage: {
-    width: '48%',
-    height: 100,
-    borderRadius: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    justifyContent: 'space-between',
-  },
-  metricCard: {
-    backgroundColor: '#f0f0f0',
-    padding: 12,
-    borderRadius: 8,
-    width: '48%',
-  },
-  metricTitle: {
-    fontWeight: '600',
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  metricItem: {
-    fontSize: 12,
     color: '#444',
+    textAlign: 'center',
   },
-  referral: {
-    backgroundColor: '#d9fdd3',
-    margin: 16,
-    padding: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  referralText: {
-    fontWeight: '600',
-    fontSize: 16,
-    marginBottom: 6,
-  },
-  referralLink: {
-    color: '#008000',
-    fontSize: 14,
+  icon: {
+    width: width * 0.6,
+    height: 180,
+    marginBottom: 10,
   },
 });
