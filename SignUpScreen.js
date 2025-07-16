@@ -14,7 +14,10 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import * as ImagePicker from 'expo-image-picker';
+
+import { auth, db, storage } from './firebase';
 
 export default function SignUpScreen() {
   const navigation = useNavigation();
@@ -22,6 +25,7 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState(null);
 
   const logoAnim = useRef(new Animated.Value(0)).current;
   const formY = useRef(new Animated.Value(30)).current;
@@ -49,16 +53,46 @@ export default function SignUpScreen() {
     ]).start();
   }, []);
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
   const handleSignUp = async () => {
     setError('');
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      await setDoc(doc(db, 'users', user.uid), { email, role: 'client' });
+
+      let photoURL = null;
+
+      // Upload profile photo
+      if (image) {
+        const response = await fetch(image);
+        const blob = await response.blob();
+        const fileRef = ref(storage, `profilePhotos/${user.uid}.jpg`);
+        await uploadBytes(fileRef, blob);
+        photoURL = await getDownloadURL(fileRef);
+      }
+
+      await setDoc(doc(db, 'users', user.uid), {
+        email,
+        role: 'client',
+        photoURL,
+      });
 
       navigation.replace('ClientHomeScreen');
     } catch (err) {
+      console.error(err);
       setError('Error signing up. Please check your info and try again.');
     }
     setLoading(false);
@@ -77,6 +111,16 @@ export default function SignUpScreen() {
 
       <Animated.View style={[styles.form, { opacity: formOpacity, transform: [{ translateY: formY }] }]}>
         <Text style={styles.title}>Sign Up</Text>
+
+        <TouchableOpacity onPress={pickImage} style={styles.avatarContainer}>
+          <Image
+            source={{
+              uri: image || 'https://i.imgur.com/6VBx3io.png',
+            }}
+            style={styles.avatar}
+          />
+          <Text style={styles.avatarText}>Upload Profile Photo</Text>
+        </TouchableOpacity>
 
         <TextInput
           style={styles.input}
@@ -140,6 +184,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     paddingHorizontal: 16,
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 6,
+    backgroundColor: '#eee',
+  },
+  avatarText: {
+    fontSize: 12,
+    color: '#555',
   },
   error: {
     color: 'red',

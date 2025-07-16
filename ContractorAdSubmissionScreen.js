@@ -1,55 +1,64 @@
-// ContractorAdSubmissionScreen.js
-
 import React, { useState } from 'react';
 import { View, TextInput, Text, Button, StyleSheet, Alert, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { db, auth } from './firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { useNavigation } from '@react-navigation/native';
 
 export default function ContractorAdSubmissionScreen() {
   const [blurb, setBlurb] = useState('');
   const [image, setImage] = useState(null);
+  const [budget, setBudget] = useState('');
+  const navigation = useNavigation();
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
     });
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
   };
 
-  const submitAd = async () => {
-    if (!blurb) return Alert.alert('Missing', 'Please add a blurb');
-    try {
-      await setDoc(doc(db, 'contractorAds', auth.currentUser.uid), {
-        blurb,
-        image,
-        timestamp: new Date().toISOString(),
-      });
-      Alert.alert('Success', 'Ad submitted!');
-      setBlurb('');
-      setImage(null);
-    } catch (err) {
-      Alert.alert('Error', 'Could not submit ad');
+  const goToPreview = () => {
+    if (!blurb || !image || !budget) {
+      Alert.alert('Missing Info', 'Please complete all fields');
+      return;
     }
+
+    navigation.navigate('AdPreviewScreen', {
+      blurb,
+      image,
+      budget: parseFloat(budget),
+    });
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Your Ad</Text>
+
       <TextInput
-        placeholder="Your work style, specialties, or pitch to clients..."
+        placeholder="Describe your service or specialty..."
         style={styles.input}
         multiline
         numberOfLines={4}
         value={blurb}
         onChangeText={setBlurb}
       />
+
       {image && <Image source={{ uri: image }} style={styles.preview} />}
       <Button title="Pick Photo" onPress={pickImage} />
-      <Button title="Submit Ad" onPress={submitAd} color="#008080" />
+
+      <TextInput
+        placeholder="Budget (e.g. 20)"
+        keyboardType="numeric"
+        style={styles.input}
+        value={budget}
+        onChangeText={setBudget}
+      />
+
+      <Button title="Preview Ad" onPress={goToPreview} color="#008080" />
     </View>
   );
 }
