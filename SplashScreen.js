@@ -1,24 +1,28 @@
+// SplashScreen.js
 import React, { useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
-import * as SplashScreen from 'expo-splash-screen';
+import * as SplashScreenAPI from 'expo-splash-screen';
+import { useNavigation } from '@react-navigation/native';
 
-// Prevent splash from auto-hiding before we're ready
-SplashScreen.preventAutoHideAsync();
+SplashScreenAPI.preventAutoHideAsync();
 
-const SplashScreenComponent = ({ navigation }) => {
+export default function SplashScreen() {
   const screenWidth = Dimensions.get('window').width;
+  const navigation = useNavigation();
 
   useEffect(() => {
     const timer = setTimeout(() => {
       onAuthStateChanged(auth, async (user) => {
         try {
-          await SplashScreen.hideAsync();
+          const hasSeenIntro = await AsyncStorage.getItem('hasSeenIntro');
+          const role = await AsyncStorage.getItem('userRole');
+
+          await SplashScreenAPI.hideAsync();
 
           if (user) {
-            const role = await AsyncStorage.getItem('userRole');
             if (role === 'contractor') {
               navigation.replace('ContractorHomeScreen');
             } else if (role === 'admin') {
@@ -27,11 +31,15 @@ const SplashScreenComponent = ({ navigation }) => {
               navigation.replace('ClientHomeScreen');
             }
           } else {
-            navigation.replace('MenderOnboardingScreen');
+            if (hasSeenIntro === 'true') {
+              navigation.replace('MenderOnboardingScreen');
+            } else {
+              navigation.replace('IntroScreen');
+            }
           }
         } catch (err) {
           console.error('Splash navigation error:', err);
-          await SplashScreen.hideAsync();
+          await SplashScreenAPI.hideAsync();
           navigation.replace('MenderOnboardingScreen');
         }
       });
@@ -49,7 +57,7 @@ const SplashScreenComponent = ({ navigation }) => {
       />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -62,5 +70,3 @@ const styles = StyleSheet.create({
     height: 180,
   },
 });
-
-export default SplashScreenComponent;

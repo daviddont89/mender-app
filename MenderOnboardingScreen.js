@@ -6,14 +6,14 @@ import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import firebaseApp from './firebase';
 
 // Auth & Intro
-import SplashScreen from './SplashScreen';
 import OnboardingScreen from './OnboardingScreen';
 import LoginScreen from './LoginScreen';
 import SignupScreen from './SignUpScreen';
 import WelcomeBackScreen from './WelcomeBackScreen';
 import ApplyContractorScreen from './ApplyContractorScreen';
+import IntroScreen from './IntroScreen';
 
-// Drawer Navigators (NEW)
+// Drawer Navigators
 import ClientDrawerNavigator from './ClientDrawerNavigator';
 import ContractorDrawerNavigator from './ContractorDrawerNavigator';
 import AdminDrawerNavigator from './AdminDrawerNavigator';
@@ -37,7 +37,6 @@ import AdminAdControlScreen from './AdminAdControlScreen';
 import AdminPackageBuilderScreen from './AdminPackageBuilderScreen';
 import ClientSubscriptionScreen from './ClientSubscriptionScreen';
 
-
 const Stack = createStackNavigator();
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
@@ -59,31 +58,26 @@ export default function MenderOnboardingScreen() {
         } else {
           setInitialRoute('OnboardingScreen');
         }
-        setCheckingAuth(false);
       } else {
-        // Show splash for 2.5 seconds then go to onboarding
-        setInitialRoute('SplashScreen');
-        setTimeout(() => {
-          setInitialRoute('OnboardingScreen');
-          setCheckingAuth(false);
-        }, 2500);
+        setInitialRoute('OnboardingScreen');
       }
+      setCheckingAuth(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  if (checkingAuth || !initialRoute) return <SplashScreen />;
+  if (checkingAuth || !initialRoute) return null;
 
   return (
     <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
       {/* Auth & Intro */}
-      <Stack.Screen name="SplashScreen" component={SplashScreen} />
       <Stack.Screen name="OnboardingScreen" component={OnboardingScreen} />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
       <Stack.Screen name="WelcomeBackScreen" component={WelcomeBackScreen} />
       <Stack.Screen name="ApplyContractorScreen" component={ApplyContractorScreen} />
+      <Stack.Screen name="IntroScreen" component={IntroScreen} />
 
       {/* Role Navigators */}
       <Stack.Screen name="ClientDrawer" component={ClientDrawerNavigator} />
@@ -104,12 +98,10 @@ export default function MenderOnboardingScreen() {
       <Stack.Screen name="PaymentSetupScreen" component={PaymentSetupScreen} />
       <Stack.Screen name="PaymentHistoryScreen" component={PaymentHistoryScreen} />
 
-    
       {/* Advertising */}
       <Stack.Screen name="AdminPackageBuilderScreen" component={AdminPackageBuilderScreen} />
       <Stack.Screen name="AdminAdControlScreen" component={AdminAdControlScreen} />
       <Stack.Screen name="ClientSubscriptionScreen" component={ClientSubscriptionScreen} />
-      </Stack.Navigator>
-
+    </Stack.Navigator>
   );
 }
