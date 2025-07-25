@@ -29,15 +29,25 @@ export default function PostJobScreen({ navigation }) {
   const [photos, setPhotos] = useState([]);
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({ allowsMultipleSelection: true });
-    if (!result.cancelled) {
-      setPhotos([...photos, result.uri]);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsMultipleSelection: true,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    });
+    if (!result.canceled && result.assets) {
+      setPhotos([...photos, ...result.assets.map(a => a.uri)]);
     }
   };
 
   const takePhoto = async () => {
-    let result = await ImagePicker.launchCameraAsync();
-    if (!result.cancelled) {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Camera permission is required to take a photo.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
+    if (!result.canceled && result.assets) {
+      setPhotos([...photos, ...result.assets.map(a => a.uri)]);
+    } else if (!result.canceled && result.uri) {
       setPhotos([...photos, result.uri]);
     }
   };
@@ -154,9 +164,13 @@ export default function PostJobScreen({ navigation }) {
       </View>
 
       <View style={styles.previewContainer}>
-        {photos.map((uri, index) => (
-          <Image key={index} source={{ uri }} style={styles.preview} />
-        ))}
+        {photos.length === 0 ? (
+          <Text style={{ color: '#888', fontSize: 14 }}>No photos selected yet.</Text>
+        ) : (
+          photos.map((uri, index) => (
+            <Image key={index} source={{ uri }} style={styles.preview} />
+          ))
+        )}
       </View>
 
       <Text style={styles.expectations}>

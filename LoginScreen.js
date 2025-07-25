@@ -10,6 +10,7 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -62,13 +63,26 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
     try {
+      console.log('Attempting sign in...');
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Signed in:', userCredential.user.uid);
       const uid = userCredential.user.uid;
-      const userDoc = await getDoc(doc(db, 'users', uid));
+
+      let userDoc;
+      try {
+        userDoc = await getDoc(doc(db, 'users', uid));
+        console.log('Fetched userDoc:', userDoc.exists());
+      } catch (firestoreErr) {
+        console.log('Firestore error:', firestoreErr);
+        setError('Could not fetch user profile.');
+        setLoading(false);
+        return;
+      }
 
       if (userDoc.exists()) {
         const { role } = userDoc.data();
         await AsyncStorage.setItem('userRole', role || 'client');
+        console.log('Role:', role);
 
         if (role === 'contractor') {
           navigation.replace('ContractorHomeScreen');
@@ -79,12 +93,16 @@ export default function LoginScreen() {
         }
       } else {
         setError('User profile not found.');
+        console.log('User profile not found.');
       }
     } catch (err) {
       setError('Invalid email or password.');
+      console.log('Login error:', err);
     }
     setLoading(false);
   };
+
+  const screenWidth = Dimensions.get('window').width;
 
   return (
     <KeyboardAvoidingView
@@ -95,12 +113,10 @@ export default function LoginScreen() {
         source={require('./Icons/mender-banner.png')}
         style={[
           styles.logo,
-          {
-            transform: [
-              { translateY: logoY },
-              { scale: logoScale },
-            ],
-          },
+          { width: screenWidth * 0.8, alignSelf: 'center', transform: [
+            { translateY: logoY },
+            { scale: logoScale },
+          ] },
         ]}
         resizeMode="contain"
       />
@@ -120,6 +136,8 @@ export default function LoginScreen() {
           style={styles.input}
           placeholder="Email"
           autoCapitalize="none"
+          autoComplete="email"
+          textContentType="emailAddress"
           onChangeText={setEmail}
           value={email}
           keyboardType="email-address"
@@ -128,6 +146,9 @@ export default function LoginScreen() {
           style={styles.input}
           placeholder="Password"
           secureTextEntry
+          autoComplete="password"
+          textContentType="password"
+          autoCapitalize="none"
           onChangeText={setPassword}
           value={password}
         />
@@ -155,9 +176,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: '100%',
-    height: 180,
+    height: 80,
     marginBottom: 0,
+    alignSelf: 'center',
   },
   form: {
     width: '100%',

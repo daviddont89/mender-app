@@ -126,6 +126,8 @@ export default function SignUpScreen() {
           style={styles.input}
           placeholder="Email"
           autoCapitalize="none"
+          autoComplete="email"
+          textContentType="emailAddress"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -135,6 +137,8 @@ export default function SignUpScreen() {
           placeholder="Password"
           autoCapitalize="none"
           secureTextEntry
+          autoComplete="password"
+          textContentType="password"
           value={password}
           onChangeText={setPassword}
         />

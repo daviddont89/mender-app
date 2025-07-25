@@ -3,61 +3,89 @@ import React, { useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase';
-import * as SplashScreenAPI from 'expo-splash-screen';
-import { useNavigation } from '@react-navigation/native';
+import { auth, db } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import * as SplashScreen from 'expo-splash-screen';
 
-SplashScreenAPI.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync();
 
-export default function SplashScreen() {
+const SplashScreenComponent = ({ navigation }) => {
   const screenWidth = Dimensions.get('window').width;
-  const navigation = useNavigation();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onAuthStateChanged(auth, async (user) => {
-        try {
-          const hasSeenIntro = await AsyncStorage.getItem('hasSeenIntro');
-          const role = await AsyncStorage.getItem('userRole');
-
-          await SplashScreenAPI.hideAsync();
-
+    let isActive = true;
+  
+    const checkLogin = async () => {
+      try {
+        onAuthStateChanged(auth, async (user) => {
+          const start = Date.now();
+          console.log('onAuthStateChanged fired. User:', user ? user.uid : null);
+          let nextScreen = null;
           if (user) {
-            if (role === 'contractor') {
-              navigation.replace('ContractorHomeScreen');
-            } else if (role === 'admin') {
-              navigation.replace('AdminHomeScreen');
-            } else {
-              navigation.replace('ClientHomeScreen');
+            let role = await AsyncStorage.getItem('userRole');
+            console.log('Role from AsyncStorage:', role);
+  
+            if (!role) {
+              try {
+                const docRef = doc(db, 'users', user.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                  role = docSnap.data().role;
+                  await AsyncStorage.setItem('userRole', role);
+                  console.log('Role from Firestore:', role);
+                }
+              } catch (firestoreErr) {
+                console.log('Splash Firestore error:', firestoreErr);
+              }
             }
+  
+            if (role === 'client') nextScreen = 'ClientHomeScreen';
+            else if (role === 'contractor') nextScreen = 'ContractorHomeScreen';
+            else if (role === 'admin') nextScreen = 'AdminHomeScreen';
+            else nextScreen = 'OnboardingScreen';
           } else {
-            if (hasSeenIntro === 'true') {
-              navigation.replace('MenderOnboardingScreen');
+            // Not logged in, check if user has seen intro
+            const hasSeenIntro = await AsyncStorage.getItem('hasSeenIntro');
+            if (!hasSeenIntro) {
+              nextScreen = 'IntroScreen';
             } else {
-              navigation.replace('IntroScreen');
+              nextScreen = 'OnboardingScreen';
             }
           }
-        } catch (err) {
-          console.error('Splash navigation error:', err);
-          await SplashScreenAPI.hideAsync();
-          navigation.replace('MenderOnboardingScreen');
-        }
-      });
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, [navigation]);
+          // Ensure splash is visible for at least 1.5s
+          const elapsed = Date.now() - start;
+          const minSplash = 1500;
+          setTimeout(() => {
+            navigation.replace(nextScreen);
+          }, Math.max(0, minSplash - elapsed));
+        });
+      } catch (error) {
+        console.log('Splash checkLogin error:', error);
+        navigation.replace('OnboardingScreen');
+      } finally {
+        await SplashScreen.hideAsync();
+      }
+    };
+  
+    checkLogin();
+  
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
       <Image
         source={require('./Icons/mender-banner.png')}
-        style={[styles.banner, { width: screenWidth * 0.9 }]}
+        style={[styles.logo, { width: screenWidth * 0.8 }]}
         resizeMode="contain"
       />
     </View>
   );
-}
+};
+
+export default SplashScreenComponent;
 
 const styles = StyleSheet.create({
   container: {
@@ -66,7 +94,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  banner: {
-    height: 180,
+  logo: {
+    height: 80,
   },
 });

@@ -6,6 +6,14 @@ import { db } from './firebase';
 
 export default function AdminUserListScreen() {
   const [users, setUsers] = useState([]);
+  // Add faux/test users for demo if empty
+  if (users.length === 0) {
+    setUsers([
+      { id: 'u1', email: 'jane.client@email.com', role: 'client' },
+      { id: 'u2', email: 'carlos.contractor@email.com', role: 'contractor' },
+      { id: 'u3', email: 'admin@mender.com', role: 'admin' },
+    ]);
+  }
   const [loading, setLoading] = useState(true);
 
   const fetchUsers = async () => {

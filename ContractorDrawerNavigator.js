@@ -12,8 +12,8 @@ const Drawer = createDrawerNavigator();
 
 export default function ContractorDrawerNavigator() {
   return (
-    <Drawer.Navigator initialRouteName="ContractorHomeScreen">
-      <Drawer.Screen name="ContractorHomeScreen" component={ContractorHomeScreen} options={{ title: 'Home' }} />
+    <Drawer.Navigator initialRouteName="ContractorHome">
+      <Drawer.Screen name="ContractorHome" component={ContractorHomeScreen} options={{ title: 'Home' }} />
       <Drawer.Screen name="OpenJobsScreen" component={OpenJobsScreen} options={{ title: 'Open Jobs' }} />
       <Drawer.Screen name="ContractorJobScreen" component={ContractorJobScreen} options={{ title: 'My Jobs' }} />
       <Drawer.Screen name="ContactUsScreen" component={ContactUsScreen} options={{ title: 'Contact Us' }} />

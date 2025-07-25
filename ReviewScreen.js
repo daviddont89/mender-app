@@ -5,6 +5,15 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 export default function ReviewScreen({ route }) {
   const { role, jobId } = route.params;
   const [review, setReview] = useState('');
+  const [reviews, setReviews] = useState([]);
+  // Add faux/test reviews for demo if empty
+  if (reviews.length === 0) {
+    setReviews([
+      { id: 'r1', reviewer: 'Jane Client', target: 'Carlos Martinez', rating: 5, text: 'Great work and communication!' },
+      { id: 'r2', reviewer: 'Bob Smith', target: 'Jane Smith', rating: 4, text: 'Job done well, a bit late.' },
+      { id: 'r3', reviewer: 'Alice Lee', target: 'Handy Pros LLC', rating: 5, text: 'Super fast and professional.' },
+    ]);
+  }
 
   const handleSubmit = () => {
     if (review.trim().length === 0) {

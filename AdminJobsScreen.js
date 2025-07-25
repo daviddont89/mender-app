@@ -53,16 +53,20 @@ export default function AdminJobsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>All Jobs</Text>
+      <Text style={styles.header}>All Jobs</Text>
       {loading ? (
         <ActivityIndicator size="large" color="#008080" />
       ) : (
-        <FlatList
-          data={jobs}
-          keyExtractor={(item) => item.id}
-          renderItem={renderJob}
-          ListEmptyComponent={<Text>No jobs found.</Text>}
-        />
+        jobs.length === 0 ? (
+          <Text style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>No jobs found.</Text>
+        ) : (
+          <FlatList
+            data={jobs}
+            keyExtractor={(item) => item.id}
+            renderItem={renderJob}
+            contentContainerStyle={{ paddingBottom: 40 }}
+          />
+        )
       )}
     </View>
   );
@@ -74,7 +78,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
   },
-  heading: {
+  header: {
     fontSize: 26,
     fontWeight: 'bold',
     color: '#008080',

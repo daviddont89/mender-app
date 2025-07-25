@@ -1,7 +1,7 @@
 // ContactUsScreen.js
 
 import React, { useState } from 'react';
-import { View, TextInput, Text, Button, StyleSheet, Alert } from 'react-native';
+import { View, TextInput, Text, Button, StyleSheet, Alert, TouchableOpacity, Image } from 'react-native';
 import { db, auth } from './firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
@@ -22,7 +22,7 @@ export default function ContactUsScreen() {
         message,
         timestamp: new Date().toISOString(),
       });
-      Alert.alert('Thank You', 'Your message has been sent.');
+      Alert.alert('Thank You', 'Your message has been sent! Our team will get back to you soon.');
       setSubject('');
       setMessage('');
     } catch (err) {
@@ -32,7 +32,9 @@ export default function ContactUsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Contact Us</Text>
+      <Image source={require('./Icons/handshake.png')} style={styles.icon} />
+      <Text style={styles.heading}>Contact Us</Text>
+      <Text style={styles.positive}>We're here to help! Send us a message and our friendly team will respond ASAP. 😊</Text>
       <TextInput
         style={styles.input}
         placeholder="Subject"
@@ -46,19 +48,32 @@ export default function ContactUsScreen() {
         value={message}
         onChangeText={setMessage}
       />
-      <Button title="Send Message" onPress={handleSubmit} color="#008080" />
+      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Send Message</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, flex: 1, backgroundColor: '#fff' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#008080' },
+  container: { flex: 1, backgroundColor: '#fff', padding: 20, alignItems: 'center' },
+  icon: { width: 70, height: 70, marginBottom: 10, marginTop: 20 },
+  heading: { fontSize: 22, fontWeight: 'bold', color: '#008080', marginBottom: 8 },
+  positive: { color: '#008080', fontSize: 15, marginBottom: 18, textAlign: 'center' },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 20,
+    width: '100%',
+    borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
+    marginBottom: 12, paddingHorizontal: 16, paddingVertical: 10, fontSize: 16,
+    backgroundColor: '#f9f9f9',
   },
+  button: {
+    backgroundColor: '#008080',
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 });

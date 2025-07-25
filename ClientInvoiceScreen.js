@@ -4,12 +4,14 @@ import { View, Text, StyleSheet, ActivityIndicator, Button, ScrollView } from 'r
 import { useRoute } from '@react-navigation/native';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
+import { useStripe } from '@stripe/stripe-react-native';
 
 export default function ClientInvoiceScreen() {
   const route = useRoute();
   const { invoiceId } = route.params;
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { presentPaymentSheet } = useStripe();
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -34,6 +36,38 @@ export default function ClientInvoiceScreen() {
   const total = invoice.items.reduce((sum, item) => sum + parseFloat(item.amount), 0);
   const tax = invoice.taxRate ? (total * invoice.taxRate).toFixed(2) : 0;
   const grandTotal = (parseFloat(total) + parseFloat(tax)).toFixed(2);
+
+  const handlePayNow = async () => {
+    setLoading(true);
+    try {
+      // TODO: Replace with your backend endpoint for creating a PaymentIntent
+      const response = await fetch('https://menderstripebackend-production.up.railway.app/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: Math.round(grandTotal * 100), // amount in cents
+          currency: 'usd',
+          // Optionally pass job/invoice info
+        }),
+      });
+      const { clientSecret, error } = await response.json();
+      if (error || !clientSecret) {
+        alert('Failed to start payment.');
+        setLoading(false);
+        return;
+      }
+      const { error: sheetError } = await presentPaymentSheet({ paymentIntentClientSecret: clientSecret });
+      if (sheetError) {
+        alert(`Payment failed: ${sheetError.message}`);
+      } else {
+        alert('Payment successful!');
+        // TODO: Optionally update invoice/payment status in your database
+      }
+    } catch (err) {
+      alert('Payment error.');
+    }
+    setLoading(false);
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -70,7 +104,7 @@ export default function ClientInvoiceScreen() {
 
       <Text style={styles.note}>💡 Payment methods coming soon. We'll charge your saved payment method or let you choose at checkout.</Text>
 
-      <Button title="Pay Now (placeholder)" onPress={() => alert('Payment processing coming soon.')} />
+      <Button title={loading ? 'Processing...' : 'Pay Now'} onPress={handlePayNow} disabled={loading} />
     </ScrollView>
   );
 }

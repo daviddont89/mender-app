@@ -3,88 +3,81 @@ import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
-  Image,
   StyleSheet,
-  TouchableOpacity,
+  Image,
   Dimensions,
-  FlatList
+  TouchableOpacity,
+  FlatList,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const slides = [
   {
     key: 'slide1',
-    title: 'Post a Job',
-    text: 'Quickly post what you need done—home repairs, yardwork, or anything else.',
-    image: require('./Icons/house-1.png'), // ✅ from zip
+    title: 'Need a Hand?',
+    description: 'Post jobs and get them done fast by trusted local pros.',
+    image: require('./Icons/house-1.png'),
   },
   {
     key: 'slide2',
-    title: 'Get Paired',
-    text: 'We’ll match you with a nearby contractor who’s ready to work.',
-    image: require('./Icons/house-5.png'), // ✅ from zip
+    title: 'Trusted Contractors',
+    description: 'All contractors are background checked and reviewed.',
+    image: require('./Icons/house-5.png'),
   },
   {
     key: 'slide3',
-    title: 'Track and Pay',
-    text: 'Track progress, communicate, and pay—all through the app.',
-    image: require('./Icons/Receipt.png'), // ✅ from zip
+    title: 'Simple, Fast, Fair',
+    description: 'Easy scheduling, transparent pricing, no surprises.',
+    image: require('./Icons/Receipt.png'),
   },
 ];
 
 export default function IntroScreen() {
   const navigation = useNavigation();
+  const [currentSlide, setCurrentSlide] = useState(0);
   const flatListRef = useRef();
-  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handleNext = async () => {
-    if (currentIndex < slides.length - 1) {
-      flatListRef.current.scrollToIndex({ index: currentIndex + 1 });
-      setCurrentIndex(currentIndex + 1);
+  const handleNext = () => {
+    if (currentSlide < slides.length - 1) {
+      flatListRef.current.scrollToIndex({ index: currentSlide + 1 });
+      setCurrentSlide(currentSlide + 1);
     } else {
-      await AsyncStorage.setItem('hasSeenIntro', 'true');
-      navigation.replace('MenderOnboardingScreen');
+      AsyncStorage.setItem('hasSeenIntro', 'true');
+      navigation.replace('OnboardingScreen');
     }
-  };
-
-  const handleSkip = async () => {
-    await AsyncStorage.setItem('hasSeenIntro', 'true');
-    navigation.replace('MenderOnboardingScreen');
   };
 
   const renderSlide = ({ item }) => (
     <View style={styles.slide}>
       <Image source={item.image} style={styles.image} resizeMode="contain" />
       <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.text}>{item.text}</Text>
+      <Text style={styles.description}>{item.description}</Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
       <FlatList
-        ref={flatListRef}
         data={slides}
+        ref={flatListRef}
+        renderItem={renderSlide}
         horizontal
         pagingEnabled
-        scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.key}
-        renderItem={renderSlide}
+        onMomentumScrollEnd={(e) => {
+          const index = Math.floor(e.nativeEvent.contentOffset.x / width);
+          setCurrentSlide(index);
+        }}
       />
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={handleSkip}>
-          <Text style={styles.skip}>Skip</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextText}>
-            {currentIndex === slides.length - 1 ? 'Get Started' : 'Next'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity style={styles.button} onPress={handleNext}>
+        <Text style={styles.buttonText}>
+          {currentSlide === slides.length - 1 ? 'Get Started' : 'Next'}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -92,54 +85,43 @@ export default function IntroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   slide: {
-    width,
-    padding: 30,
-    justifyContent: 'center',
+    width: width,
     alignItems: 'center',
+    padding: 20,
   },
   image: {
-    width: width * 0.7,
-    height: height * 0.3,
-    marginBottom: 40,
+    width: '80%',
+    height: 250,
+    marginBottom: 30,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#008080',
+    marginBottom: 10,
     textAlign: 'center',
-    marginBottom: 15,
-    fontFamily: 'Quicksand-Bold',
   },
-  text: {
+  description: {
     fontSize: 16,
     textAlign: 'center',
+    paddingHorizontal: 20,
     color: '#333',
-    fontFamily: 'Quicksand-Regular',
   },
-  buttonContainer: {
+  button: {
+    backgroundColor: '#008080',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 30,
     position: 'absolute',
     bottom: 40,
-    left: 30,
-    right: 30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  skip: {
-    fontSize: 16,
-    color: '#666',
-  },
-  nextButton: {
-    backgroundColor: '#008080',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  nextText: {
+  buttonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontSize: 18,
   },
 });

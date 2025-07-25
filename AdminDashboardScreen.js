@@ -20,6 +20,12 @@ export default function AdminDashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
   const [showUsers, setShowUsers] = useState(false);
+  const [metrics] = useState({
+    totalUsers: 128,
+    totalJobs: 342,
+    totalEarnings: 48250,
+    totalSubscriptions: 57,
+  });
 
   const loadUsers = async () => {
     setLoading(true);
@@ -60,6 +66,21 @@ export default function AdminDashboardScreen() {
     setUpdatingId(null);
   };
 
+  const recentJobs = [
+    { id: '1', title: 'Gutter Cleaning', client: 'Jane Client', status: 'Completed' },
+    { id: '2', title: 'Deck Repair', client: 'Bob Smith', status: 'In Progress' },
+    { id: '3', title: 'Winterizing', client: 'Alice Lee', status: 'Open' },
+  ];
+  const recentUsers = [
+    { id: 'u1', name: 'Jane Client', role: 'client' },
+    { id: 'u2', name: 'Carlos Martinez', role: 'contractor' },
+    { id: 'u3', name: 'Admin User', role: 'admin' },
+  ];
+  const recentReviews = [
+    { id: 'r1', reviewer: 'Jane Client', target: 'Carlos Martinez', rating: 5, text: 'Great work and communication!' },
+    { id: 'r2', reviewer: 'Bob Smith', target: 'Jane Smith', rating: 4, text: 'Job done well, a bit late.' },
+  ];
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -69,7 +90,50 @@ export default function AdminDashboardScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.container}>
+      {/* Analytics Dashboard */}
+      <View style={styles.metricsRow}>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricValue}>{metrics.totalUsers}</Text>
+          <Text style={styles.metricLabel}>Users</Text>
+        </View>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricValue}>{metrics.totalJobs}</Text>
+          <Text style={styles.metricLabel}>Jobs</Text>
+        </View>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricValue}>${metrics.totalEarnings.toLocaleString()}</Text>
+          <Text style={styles.metricLabel}>Earnings</Text>
+        </View>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricValue}>{metrics.totalSubscriptions}</Text>
+          <Text style={styles.metricLabel}>Subscriptions</Text>
+        </View>
+      </View>
+      {/* Recent Jobs */}
+      <Text style={styles.sectionTitle}>Recent Jobs</Text>
+      {recentJobs.map(job => (
+        <View key={job.id} style={styles.listItem}>
+          <Text style={styles.listTitle}>{job.title}</Text>
+          <Text style={styles.listSub}>{job.client} • {job.status}</Text>
+        </View>
+      ))}
+      {/* Recent Users */}
+      <Text style={styles.sectionTitle}>Recent Users</Text>
+      {recentUsers.map(user => (
+        <View key={user.id} style={styles.listItem}>
+          <Text style={styles.listTitle}>{user.name}</Text>
+          <Text style={styles.listSub}>{user.role}</Text>
+        </View>
+      ))}
+      {/* Recent Reviews */}
+      <Text style={styles.sectionTitle}>Recent Reviews</Text>
+      {recentReviews.map(r => (
+        <View key={r.id} style={styles.listItem}>
+          <Text style={styles.listTitle}>{r.reviewer} → {r.target}</Text>
+          <Text style={styles.listSub}>⭐ {r.rating} — {r.text}</Text>
+        </View>
+      ))}
       <Text style={styles.title}>Admin Dashboard</Text>
 
       {/* Dashboard Tiles */}
@@ -153,4 +217,32 @@ const styles = StyleSheet.create({
   },
   roleButtonText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  metricsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  metricCard: {
+    backgroundColor: '#e0f7f5',
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  metricValue: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#008080',
+  },
+  metricLabel: {
+    fontSize: 13,
+    color: '#555',
+    marginTop: 4,
+  },
+  sectionTitle: { fontSize: 17, fontWeight: 'bold', color: '#008080', marginTop: 18, marginBottom: 6 },
+  listItem: { backgroundColor: '#f9f9f9', borderRadius: 8, padding: 10, marginBottom: 6 },
+  listTitle: { fontWeight: 'bold', color: '#222' },
+  listSub: { color: '#555', fontSize: 14 },
 });

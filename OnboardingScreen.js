@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Animated,
   Image,
+  Dimensions,
 } from 'react-native';
 
 export default function OnboardingScreen({ navigation }) {
@@ -35,11 +36,13 @@ export default function OnboardingScreen({ navigation }) {
     ]).start();
   }, []);
 
+  const screenWidth = Dimensions.get('window').width;
+
   return (
     <View style={styles.container}>
       <Animated.Image
         source={require('./Icons/mender-banner.png')}
-        style={[styles.logo, { transform: [{ translateY: logoAnim }] }]}
+        style={[styles.logo, { width: screenWidth * 0.8, alignSelf: 'center', transform: [{ translateY: logoAnim }] }]}
         resizeMode="contain"
       />
 
@@ -84,8 +87,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: '100%',
-    height: 100,
+    height: 80,
     marginBottom: 20,
     alignSelf: 'center',
   },

@@ -15,8 +15,8 @@ const Drawer = createDrawerNavigator();
 
 export default function AdminDrawerNavigator() {
   return (
-    <Drawer.Navigator initialRouteName="AdminDashboardScreen">
-      <Drawer.Screen name="AdminDashboardScreen" component={AdminDashboardScreen} options={{ title: 'Dashboard' }} />
+    <Drawer.Navigator initialRouteName="AdminDashboard">
+      <Drawer.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Dashboard' }} />
       <Drawer.Screen name="AdminUserListScreen" component={AdminUserListScreen} options={{ title: 'Users' }} />
       <Drawer.Screen name="AdminJobsScreen" component={AdminJobsScreen} options={{ title: 'Jobs' }} />
       <Drawer.Screen name="AdminPaymentsScreen" component={AdminPaymentsScreen} options={{ title: 'Payments' }} />

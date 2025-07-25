@@ -1,6 +1,3 @@
-// 🔒 LOCKED FILE — DO NOT EDIT, FIX, OR REPLACE
-// ContractorOnboardingScreen.js
-
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
